@@ -21,8 +21,16 @@
             overflow: hidden;
         }
 
+         #barra-superior {
+             display: flex;
+             align-items: center;
+             gap: 8px;
+             padding: 8px;
+             background: #fff;
+         }
+
          #caja-texto {
-             width: 100%;
+             flex: 1;
              height: 100px;
              font-size: 24px;
              padding: 12px;
@@ -31,15 +39,6 @@
              resize: none;
              text-transform: uppercase;
          }
-
-        .botones-superiores {
-            display: flex;
-            gap: 8px;
-            padding: 8px;
-            background-color: #fff;
-            flex-wrap: wrap;
-            justify-content: space-between;
-        }
 
 .btn-accion {
             padding: 8px 20px;
@@ -205,12 +204,36 @@
             bottom: 15px;
             left: 15px;
             right: 15px;
-            display: flex;
+            display: none;
             gap: 8px;
             z-index: 100;
             justify-content: center;
             flex-wrap: wrap;
         }
+
+        #botones-inferiores.visible {
+            display: flex;
+        }
+
+        #btn-bloqueo {
+            position: fixed;
+            bottom: 15px;
+            right: 15px;
+            z-index: 101;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 3px solid #333;
+            background: #fff;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            transition: background 0.2s;
+        }
+        #btn-bloqueo:hover { background: #e0e0e0; }
+        #btn-bloqueo.desbloqueado { background: #c8e6c9; }
 
         .btn-inferior {
             padding: 10px 14px;
@@ -511,6 +534,11 @@
         }
 
         @media (max-width: 600px) {
+            #barra-superior {
+                gap: 4px;
+                padding: 4px;
+            }
+
             #caja-texto {
                 height: 80px;
                 font-size: 20px;
@@ -564,19 +592,19 @@
     </style>
 </head>
 <body>
-    <textarea id="caja-texto" placeholder="Escribe aquí..."></textarea>
-    
-    <div class="botones-superiores">
-        <button style="background:none; border:none; padding:0; cursor:pointer;" onclick="leerTexto()">
-            <img src="play.jpg" alt="LEER" style="height:60px;">
+    <div id="barra-superior">
+        <button style="background:none; border:none; padding:0; cursor:pointer; flex-shrink:0;" onclick="leerTexto()">
+            <img src="play.jpg" alt="LEER" style="height:60px; display:block;">
         </button>
-        <button class="btn-accion borrar" onclick="borrarTexto()">BORRAR</button>
+        <textarea id="caja-texto" placeholder="Escribe aquí..."></textarea>
+        <button class="btn-accion borrar" onclick="borrarTexto()" style="flex-shrink:0;">BORRAR</button>
     </div>
     
     <div id="botones-temas" class="botones-temas"></div>
     
     <div id="contenedor-botones"></div>
 
+    <button id="btn-bloqueo" onclick="toggleConfig()">⚙️</button>
     <div id="botones-inferiores">
         <button class="btn-inferior temas" onclick="abrirModalTemas()">TEMAS</button>
         <button class="btn-inferior palabras" onclick="abrirModalPalabras()">PALABRAS</button>
@@ -593,7 +621,7 @@
                 <button class="btn-borrar-tema" onclick="borrarTema()">BORRAR</button>
             </div>
             <div style="margin-top: 10px;">
-                <button class="btn-nuevo" onclick="mostrarNuevoTema()" style="width:100%;">NUEVO TEMA</button>
+                <button class="btn-nuevo" onclick="mostrarNuevoTema()">NUEVO TEMA</button>
             </div>
             <div id="div-nuevo-tema" style="display: none; margin-top: 10px; border-top: 2px solid #ddd; padding-top: 10px;">
                 <input type="text" id="input-nuevo-tema" placeholder="Nombre del nuevo tema..." style="width:100%;padding:8px;font-size:14px;margin-bottom:8px;border:2px solid #333;border-radius:8px;">
@@ -667,10 +695,10 @@
                 <label>AÑADIR DESDE IMAGEN EXISTENTE:</label>
                 <select id="select-imagen-existente" style="width:100%;padding:8px;font-size:14px;margin-bottom:8px;border:2px solid #333;border-radius:8px;"></select>
                 <input type="text" id="input-palabra-existente" placeholder="Palabra..." style="width:100%;padding:8px;font-size:14px;margin-bottom:8px;border:2px solid #333;border-radius:8px;text-transform:uppercase;">
-                <button class="btn-aceptar" onclick="anadirDesdeExistente()">AÑADIR</button>
-            </div>
-            <div style="margin-top:15px;display:flex;gap:10px;">
-                <button class="btn-cancelar" onclick="cerrarModalConfig()">CERRAR</button>
+                <div style="display:flex;gap:10px;margin-top:8px;">
+                    <button class="btn-aceptar" onclick="anadirDesdeExistente()" style="flex:1;">AÑADIR</button>
+                    <button class="btn-cancelar" onclick="cerrarModalConfig()" style="flex:1;">CERRAR</button>
+                </div>
             </div>
             <p id="info-gestion-config" style="margin-top: 15px; font-size: 14px; color: #666;"></p>
         </div>
@@ -701,7 +729,19 @@
                 configuracion.temas_info[tema] = temasInfoCustom[tema];
             }
         });
-        
+
+        // Filtrar temas por defecto eliminados (persistidos en localStorage)
+        const temasEliminados = JSON.parse(localStorage.getItem('temas_eliminados') || '[]');
+        temasEliminados.forEach(tema => {
+            if (temasOriginalesConfig.includes(tema)) {
+                delete configuracion.temas[tema];
+                delete configuracion.temas_info[tema];
+                if (temas.includes(tema)) {
+                    temas = temas.filter(t => t !== tema);
+                }
+            }
+        });
+
         let temaActual = 0;
         let synthesis = window.speechSynthesis;
         let imagenBase64 = '';
@@ -897,6 +937,31 @@
             document.getElementById('modal-importar').classList.remove('mostrar');
         }
 
+        let configBloqueada = true;
+
+        function toggleConfig() {
+            const botones = document.getElementById('botones-inferiores');
+            const btn = document.getElementById('btn-bloqueo');
+            if (configBloqueada) {
+                const clave = configuracion.clave_acceso || 'sonrie';
+                const respuesta = prompt('Introduce la contraseña:');
+                if (respuesta === null) return;
+                if (respuesta !== clave) {
+                    alert('Contraseña incorrecta');
+                    return;
+                }
+                configBloqueada = false;
+                botones.classList.add('visible');
+                btn.classList.add('desbloqueado');
+                btn.textContent = '🔓';
+            } else {
+                configBloqueada = true;
+                botones.classList.remove('visible');
+                btn.classList.remove('desbloqueado');
+                btn.textContent = '⚙️';
+            }
+        }
+
         function vistaPreviaImagen() {
             const archivo = document.getElementById('input-archivo').files[0];
             if (archivo) {
@@ -960,14 +1025,22 @@
               const nombre = document.getElementById('input-nuevo-tema').value.trim().toLowerCase().replace(/\s+/g, '_');
               if (!nombre) return;
               
-              if (!configuracion.temas[nombre]) {
-                  configuracion.temas[nombre] = [];
-                  temas = Object.keys(configuracion.temas);
-                  
-                  // Guardar los temas personalizados en localStorage
-                  const temasPersonalizados = temas.filter(t => !temasOriginalesConfig.includes(t));
-                  localStorage.setItem('temas_custom', JSON.stringify(temasPersonalizados));
-              }
+               if (!configuracion.temas[nombre]) {
+                   configuracion.temas[nombre] = [];
+                   temas = Object.keys(configuracion.temas);
+                   
+                   // Si estaba en eliminados, quitarlo (el usuario lo recrea)
+                   const temasEliminados = JSON.parse(localStorage.getItem('temas_eliminados') || '[]');
+                   const idx = temasEliminados.indexOf(nombre);
+                   if (idx >= 0) {
+                       temasEliminados.splice(idx, 1);
+                       localStorage.setItem('temas_eliminados', JSON.stringify(temasEliminados));
+                   }
+                   
+                   // Guardar los temas personalizados en localStorage
+                   const temasPersonalizados = temas.filter(t => !temasOriginalesConfig.includes(t));
+                   localStorage.setItem('temas_custom', JSON.stringify(temasPersonalizados));
+               }
               
                // Guardar imagen del tema si se selecciono una
                const imgSel = document.querySelector('#lista-imagenes-tema .img-option.seleccionada');
@@ -1006,11 +1079,18 @@
                       if (temaActual >= temas.length) temaActual = 0;
                   }
                   
-                  // Actualizar localStorage con los temas personalizados restantes
-                  const temasPersonalizados = temas.filter(t => !temasOriginalesConfig.includes(t));
-                  localStorage.setItem('temas_custom', JSON.stringify(temasPersonalizados));
-                  
-                    crearOpcionesTematicas();
+                   // Persistir el borrado en localStorage (para que sobreviva a recarga)
+                   const temasEliminados = JSON.parse(localStorage.getItem('temas_eliminados') || '[]');
+                   if (!temasEliminados.includes(tema)) {
+                       temasEliminados.push(tema);
+                   }
+                   localStorage.setItem('temas_eliminados', JSON.stringify(temasEliminados));
+                   
+                   // Actualizar localStorage con los temas personalizados restantes
+                   const temasPersonalizados = temas.filter(t => !temasOriginalesConfig.includes(t));
+                   localStorage.setItem('temas_custom', JSON.stringify(temasPersonalizados));
+                   
+                     crearOpcionesTematicas();
                     crearOpcionesTematicasPalabras();
                     crearOpcionesTematicasConfig();
                     crearBotonesTemas();
@@ -1257,10 +1337,13 @@
 
             const jsContent = 'const configuracion = ' + JSON.stringify(configData, null, 4) + ';';
 
+            const nombre = prompt('Nombre del archivo (sin extensión):', 'conf_config');
+            if (nombre === null) return;
+            const nombreFinal = (nombre.trim() || 'conf_config') + '.js';
             const blob = new Blob([jsContent], { type: 'text/javascript' });
             const enlace = document.createElement('a');
             enlace.href = URL.createObjectURL(blob);
-            enlace.download = 'config.js';
+            enlace.download = nombreFinal;
             enlace.click();
             URL.revokeObjectURL(enlace.href);
 
@@ -1299,8 +1382,33 @@
                 // Actualizar temas y reiniciar seleccion
                 temas = Object.keys(configuracion.temas);
                 temaActual = 0;
+
+                // Limpiar temas_eliminados si el tema importado los recupera
+                const temasEliminados = JSON.parse(localStorage.getItem('temas_eliminados') || '[]');
+                const temasEliminadosRestantes = temasEliminados.filter(t => !temas.includes(t));
+                localStorage.setItem('temas_eliminados', JSON.stringify(temasEliminadosRestantes));
+
                 const temasPersonalizados = temas.filter(t => !temasOriginalesConfig.includes(t));
                 localStorage.setItem('temas_custom', JSON.stringify(temasPersonalizados));
+
+                // Persistir items de temas personalizados para que sobrevivan a recarga
+                const infoCustom = JSON.parse(localStorage.getItem('temas_info_custom') || '{}');
+                temasPersonalizados.forEach(tema => {
+                    const items = configuracion.temas[tema] || [];
+                    // Guardar items en imagenes_{tema} con la ruta completa
+                    const itemsConRuta = items.map(item => ({
+                        palabra: item.palabra,
+                        imagen: item.imagen.startsWith('data:') ? item.imagen : 'imagenes/' + item.imagen
+                    }));
+                    localStorage.setItem('imagenes_' + tema, JSON.stringify(itemsConRuta));
+                    // Vaciar configuracion.temas[tema] (los items custom se sirven desde imagenes_{tema})
+                    configuracion.temas[tema] = [];
+                    // Guardar temas_info del tema personalizado
+                    if (configuracion.temas_info && configuracion.temas_info[tema]) {
+                        infoCustom[tema] = configuracion.temas_info[tema];
+                    }
+                });
+                localStorage.setItem('temas_info_custom', JSON.stringify(infoCustom));
 
                 // Regenerar UI
                 crearOpcionesTematicas();
