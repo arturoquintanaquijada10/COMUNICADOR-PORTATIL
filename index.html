@@ -1165,8 +1165,9 @@ function borrarImagenSeleccionada() {
                 // Limpiar personalizadas (el config importado es la unica fuente de verdad)
                 temas.forEach(tema => localStorage.removeItem('imagenes_' + tema));
 
-                // Actualizar temas
+                // Actualizar temas y reiniciar seleccion
                 temas = Object.keys(configuracion.temas);
+                temaActual = 0;
                 const temasPersonalizados = temas.filter(t => !temasOriginalesConfig.includes(t));
                 localStorage.setItem('temas_custom', JSON.stringify(temasPersonalizados));
 
