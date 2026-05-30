@@ -219,6 +219,25 @@
             background-color: #7B1FA2;
         }
 
+        #btn-crear {
+            position: fixed;
+            bottom: 15px;
+            left: 15px;
+            padding: 12px 18px;
+            font-size: 14px;
+            cursor: pointer;
+            border: 3px solid #333;
+            background-color: #2196F3;
+            color: white;
+            border-radius: 10px;
+            font-weight: bold;
+            z-index: 100;
+        }
+
+        #btn-crear:hover {
+            background-color: #1976D2;
+        }
+
         .modal {
             display: none;
             position: fixed;
@@ -334,16 +353,18 @@
              border-radius: 8px;
          }
 
-         #select-tema {
-             padding: 10px;
-             font-size: 14px;
-             border: 2px solid #333;
-             border-radius: 8px;
-             height: 44px;
-             flex: 1;
-         }
+         #select-tema,
+         #select-tema-config,
+         #select-tema-crear {
+              padding: 10px;
+              font-size: 14px;
+              border: 2px solid #333;
+              border-radius: 8px;
+              height: 44px;
+              flex: 1;
+          }
 
-        #info-gestion {
+         #info-gestion {
             text-align: center;
         }
 
@@ -375,6 +396,87 @@
 
         .btn-exportar:hover {
             background-color: #1976D2;
+        }
+
+        .picto-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .picto-item.oculto {
+            opacity: 0.4;
+        }
+
+        .picto-item.custom {
+            background: #fff3e0;
+        }
+
+        .picto-img {
+            width: 40px;
+            height: 40px;
+            object-fit: cover;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            flex-shrink: 0;
+        }
+
+        .picto-label {
+            flex: 1;
+            font-size: 13px;
+            font-weight: bold;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .picto-badge {
+            font-size: 10px;
+            color: #999;
+            padding: 2px 6px;
+            background: #f5f5f5;
+            border-radius: 4px;
+            white-space: nowrap;
+        }
+
+        .picto-toggle,
+        .picto-del {
+            padding: 4px 8px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        .picto-toggle {
+            background: #f44336;
+            color: white;
+        }
+
+        .picto-item.oculto .picto-toggle {
+            background: #4CAF50;
+        }
+
+        .picto-del {
+            background: #f44336;
+            color: white;
+        }
+
+        .picto-ocultos-section {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px dashed #ccc;
+        }
+
+        .picto-ocultos-label {
+            display: block;
+            font-size: 11px;
+            color: #999;
+            margin-bottom: 4px;
         }
 
         @media (max-width: 600px) {
@@ -414,6 +516,13 @@
                 right: 10px;
             }
 
+            #btn-crear {
+                padding: 10px 15px;
+                font-size: 12px;
+                bottom: 10px;
+                left: 10px;
+            }
+
             .modal-contenido {
                 padding: 15px;
                 margin: 10px;
@@ -439,11 +548,12 @@
     
     <div id="contenedor-botones"></div>
 
-    <button id="btn-cargar" onclick="abrirModal()">CONFIGURACION</button>
+    <button id="btn-crear" onclick="abrirModalCrear()">CREAR/EXP.</button>
+    <button id="btn-cargar" onclick="abrirModalConfig()">CONFIGURACION</button>
 
-    <div id="modal" class="modal">
+    <div id="modal-crear" class="modal">
         <div class="modal-contenido">
-            <h2>GESTION DE IMAGENES</h2>
+            <h2>CREAR / EXPORTAR</h2>
             <label>TEMA:</label>
             <div style="display: flex; gap: 10px; align-items: center;">
                 <select id="select-tema"></select>
@@ -470,9 +580,8 @@
                 <input type="file" id="input-archivo" accept="image/*" onchange="vistaPreviaImagen()">
                 <img id="vista-previa" alt="Vista previa">
             </div>
-            <br><br>
-            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                <button class="btn-cancelar" onclick="cerrarModal()">CERRAR</button>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;">
+                <button class="btn-cancelar" onclick="cerrarModalCrear()">CERRAR</button>
                 <button class="btn-aceptar" onclick="guardarImagen()">GUARDAR</button>
             </div>
             <div style="margin-top: 15px; padding-top: 15px; border-top: 2px solid #ddd;">
@@ -485,6 +594,30 @@
                 <p id="info-importar" style="margin-top: 8px; font-size: 12px; color: #666;"></p>
             </div>
             <p id="info-gestion" style="margin-top: 15px; font-size: 14px; color: #666;"></p>
+        </div>
+    </div>
+
+    <div id="modal-config" class="modal">
+        <div class="modal-contenido">
+            <h2>CONFIGURAR PICTOGRAMAS</h2>
+            <label>TEMA:</label>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <select id="select-tema-config"></select>
+            </div>
+            <div style="margin-top:10px;">
+                <label>PICTOGRAMAS DEL TEMA:</label>
+                <div id="lista-pictogramas" style="max-height:300px;overflow-y:auto;margin-bottom:10px;border:1px solid #ddd;border-radius:8px;padding:4px;"></div>
+            </div>
+            <div style="margin-top:10px;border-top:2px solid #ddd;padding-top:10px;">
+                <label>AÑADIR DESDE IMAGEN EXISTENTE:</label>
+                <select id="select-imagen-existente" style="width:100%;padding:8px;font-size:14px;margin-bottom:8px;border:2px solid #333;border-radius:8px;"></select>
+                <input type="text" id="input-palabra-existente" placeholder="Palabra..." style="width:100%;padding:8px;font-size:14px;margin-bottom:8px;border:2px solid #333;border-radius:8px;text-transform:uppercase;">
+                <button class="btn-aceptar" onclick="anadirDesdeExistente()">AÑADIR</button>
+            </div>
+            <div style="margin-top:15px;display:flex;gap:10px;">
+                <button class="btn-cancelar" onclick="cerrarModalConfig()">CERRAR</button>
+            </div>
+            <p id="info-gestion-config" style="margin-top: 15px; font-size: 14px; color: #666;"></p>
         </div>
     </div>
 
@@ -567,10 +700,13 @@
             const contenedor = document.getElementById('contenedor-botones');
             contenedor.innerHTML = '';
 
-            const configItems = (configuracion.temas[tema] || []).map(item => ({
-                ...item,
-                imagen: 'imagenes/' + item.imagen
-            }));
+            const ocultos = JSON.parse(localStorage.getItem('ocultos_' + tema) || '[]');
+            const configItems = (configuracion.temas[tema] || [])
+                .filter(item => !ocultos.includes(item.imagen))
+                .map(item => ({
+                    ...item,
+                    imagen: 'imagenes/' + item.imagen
+                }));
             const personalizados = obtenerImagenesPersonalizadas(tema);
             const todosLosItems = [...configItems, ...personalizados];
             todosLosItems.forEach(item => {
@@ -626,9 +762,32 @@
             this.value = this.value.toUpperCase();
         });
 
-        function abrirModal() {
+        function crearOpcionesTematicasConfig() {
+            const select = document.getElementById('select-tema-config');
+            if (!select) return;
+            select.innerHTML = '';
+            temas.forEach(tema => {
+                const option = document.createElement('option');
+                option.value = tema;
+                option.textContent = tema.toUpperCase();
+                select.appendChild(option);
+            });
+        }
+
+        function abrirModalConfig() {
+            crearOpcionesTematicasConfig();
+            document.getElementById('modal-config').classList.add('mostrar');
+            rellenarSelectorImagenes();
+            listarPictogramasTema();
+        }
+
+        function cerrarModalConfig() {
+            document.getElementById('modal-config').classList.remove('mostrar');
+        }
+
+        function abrirModalCrear() {
             crearOpcionesTematicas();
-            document.getElementById('modal').classList.add('mostrar');
+            document.getElementById('modal-crear').classList.add('mostrar');
             document.getElementById('input-palabra').value = '';
             document.getElementById('input-archivo').value = '';
             document.getElementById('vista-previa').style.display = 'none';
@@ -639,8 +798,8 @@
             actualizarSelectorImagenesBorrar();
         }
 
-        function cerrarModal() {
-            document.getElementById('modal').classList.remove('mostrar');
+        function cerrarModalCrear() {
+            document.getElementById('modal-crear').classList.remove('mostrar');
         }
 
         function vistaPreviaImagen() {
@@ -670,8 +829,8 @@
             existentes.push({ palabra: palabra, imagen: imagenBase64 });
             localStorage.setItem(clave, JSON.stringify(existentes));
 
-            cerrarModal();
-            crearOpcionesTematicas();
+            cerrarModalCrear();
+            actualizarSelectorImagenesBorrar();
             cargarBotones();
             leerPalabra('IMAGEN GUARDADA');
         }
@@ -699,12 +858,15 @@
                   localStorage.setItem('temas_custom', JSON.stringify(temasPersonalizados));
               }
               
-              ocultarNuevoTema();
-              crearOpcionesTematicas();
-              crearBotonesTemas();
-              cargarBotones();
-              actualizarInfoGestion();
-              leerPalabra('TEMA CREADO');
+               ocultarNuevoTema();
+               crearOpcionesTematicas();
+               crearOpcionesTematicasConfig();
+               crearBotonesTemas();
+               cargarBotones();
+               actualizarInfoGestion();
+               rellenarSelectorImagenes();
+               listarPictogramasTema();
+               leerPalabra('TEMA CREADO');
           }
 
          function borrarTema() {
@@ -721,11 +883,14 @@
                  const temasPersonalizados = temas.filter(t => !temasOriginalesConfig.includes(t));
                  localStorage.setItem('temas_custom', JSON.stringify(temasPersonalizados));
                  
-                 crearOpcionesTematicas();
-                 crearBotonesTemas();
-                 cargarBotones();
-                 actualizarInfoGestion();
-                 leerPalabra('TEMA BORRADO');
+                   crearOpcionesTematicas();
+                   crearOpcionesTematicasConfig();
+                   crearBotonesTemas();
+                   cargarBotones();
+                   actualizarInfoGestion();
+                   rellenarSelectorImagenes();
+                   listarPictogramasTema();
+                   leerPalabra('TEMA BORRADO');
              }
          }
 
@@ -780,17 +945,157 @@ function borrarImagenSeleccionada() {
             }
         }
 
+        function obtenerImagenesDisponibles() {
+            const set = new Set();
+            Object.values(configuracion.temas).forEach(items => {
+                (items || []).forEach(item => set.add(item.imagen));
+            });
+            return Array.from(set).sort((a, b) => a.localeCompare(b));
+        }
+
+        function rellenarSelectorImagenes() {
+            const select = document.getElementById('select-imagen-existente');
+            const disponibles = obtenerImagenesDisponibles();
+            select.innerHTML = '<option value="">-- SELECCIONA IMAGEN --</option>';
+            disponibles.forEach(f => {
+                const opt = document.createElement('option');
+                opt.value = f;
+                opt.textContent = f.replace(/\.png$/i, '');
+                select.appendChild(opt);
+            });
+        }
+
+        function listarPictogramasTema() {
+            const tema = document.getElementById('select-tema-config').value;
+            const lista = document.getElementById('lista-pictogramas');
+            if (!lista) return;
+            const ocultos = JSON.parse(localStorage.getItem('ocultos_' + tema) || '[]');
+
+            const configItems = configuracion.temas[tema] || [];
+            const customItems = obtenerImagenesPersonalizadas(tema);
+
+            if (configItems.length === 0 && customItems.length === 0) {
+                lista.innerHTML = '<p style="color:#999;text-align:center;padding:10px;font-size:13px;">Sin pictogramas en este tema</p>';
+                return;
+            }
+
+            let html = '';
+            let ocultosHtml = '';
+
+            configItems.forEach(item => {
+                const oculto = ocultos.includes(item.imagen);
+                const src = encodeURI('imagenes/' + item.imagen).replace(/\?/g, '%3F');
+                const row = `
+                    <div class="picto-item${oculto ? ' oculto' : ''}">
+                        <img src="${src}" onerror="this.style.display='none'" class="picto-img">
+                        <span class="picto-label">${item.palabra}</span>
+                        <span class="picto-badge">config</span>
+                        <span class="picto-toggle" data-tema="${tema}" data-imagen="${item.imagen.replace(/"/g, '&quot;')}">${oculto ? 'RESTAURAR' : 'OCULTAR'}</span>
+                    </div>
+                `;
+                if (oculto) ocultosHtml += row;
+                else html += row;
+            });
+
+            customItems.forEach((item, idx) => {
+                const src = encodeURI(item.imagen).replace(/\?/g, '%3F');
+                html += `
+                    <div class="picto-item custom">
+                        <img src="${src}" onerror="this.style.display='none'" class="picto-img">
+                        <span class="picto-label">${item.palabra}</span>
+                        <span class="picto-badge">personal</span>
+                        <span class="picto-del" data-tema="${tema}" data-idx="${idx}">BORRAR</span>
+                    </div>
+                `;
+            });
+
+            if (ocultosHtml) {
+                html += `<div class="picto-ocultos-section"><span class="picto-ocultos-label">OCULTADOS (${ocultos.length}):</span>${ocultosHtml}</div>`;
+            }
+
+            lista.innerHTML = html;
+
+            lista.querySelectorAll('.picto-toggle').forEach(el => {
+                el.onclick = () => toggleOcultar(el.dataset.tema, el.dataset.imagen);
+            });
+            lista.querySelectorAll('.picto-del').forEach(el => {
+                el.onclick = () => borrarPersonalizado(el.dataset.tema, parseInt(el.dataset.idx));
+            });
+
+            const info = document.getElementById('info-gestion-config');
+            if (info) {
+                const total = configItems.length + customItems.length;
+                info.textContent = 'Tema: ' + tema.toUpperCase() + ' | Total: ' + total + ' | Visibles: ' + (total - ocultos.length) + ' | Ocultas: ' + ocultos.length;
+            }
+        }
+
+        function toggleOcultar(tema, imagen) {
+            const clave = 'ocultos_' + tema;
+            const ocultos = JSON.parse(localStorage.getItem(clave) || '[]');
+            const idx = ocultos.indexOf(imagen);
+            if (idx >= 0) {
+                ocultos.splice(idx, 1);
+            } else {
+                ocultos.push(imagen);
+            }
+            localStorage.setItem(clave, JSON.stringify(ocultos));
+            listarPictogramasTema();
+            cargarBotones();
+        }
+
+        function borrarPersonalizado(tema, idx) {
+            const personalizados = obtenerImagenesPersonalizadas(tema);
+            if (!personalizados[idx]) return;
+            if (confirm('Borrar imagen "' + personalizados[idx].palabra + '"?')) {
+                personalizados.splice(idx, 1);
+                localStorage.setItem('imagenes_' + tema, JSON.stringify(personalizados));
+                listarPictogramasTema();
+                actualizarSelectorImagenesBorrar();
+                cargarBotones();
+                leerPalabra('IMAGEN BORRADA');
+            }
+        }
+
+        function anadirDesdeExistente() {
+            const tema = document.getElementById('select-tema-config').value;
+            const imagen = document.getElementById('select-imagen-existente').value;
+            const palabra = document.getElementById('input-palabra-existente').value.trim().toUpperCase();
+
+            if (!imagen || !palabra) {
+                alert('Selecciona una imagen y escribe una palabra');
+                return;
+            }
+
+            const clave = 'imagenes_' + tema;
+            const existentes = JSON.parse(localStorage.getItem(clave) || '[]');
+            existentes.push({ palabra: palabra, imagen: 'imagenes/' + imagen });
+            localStorage.setItem(clave, JSON.stringify(existentes));
+
+            document.getElementById('input-palabra-existente').value = '';
+            document.getElementById('select-imagen-existente').selectedIndex = 0;
+            listarPictogramasTema();
+            actualizarSelectorImagenesBorrar();
+            cargarBotones();
+            leerPalabra('AÑADIDO');
+        }
+
         function actualizarInfoGestion() {
             const tema = document.getElementById('select-tema').value;
             const todas = obtenerTodasLasImagenes(tema);
             const personalizadas = obtenerImagenesPersonalizadas(tema);
+            const ocultos = JSON.parse(localStorage.getItem('ocultos_' + tema) || '[]');
             const info = document.getElementById('info-gestion');
-            info.textContent = 'Tema: ' + tema.toUpperCase() + ' | Total: ' + todas.length + ' | Personalizadas: ' + personalizadas.length;
+            info.textContent = 'Tema: ' + tema.toUpperCase() + ' | Total: ' + todas.length + ' | Personalizadas: ' + personalizadas.length + ' | Ocultas: ' + ocultos.length;
         }
 
         document.getElementById('select-tema').addEventListener('change', function() {
             actualizarInfoGestion();
             actualizarSelectorImagenesBorrar();
+        });
+
+        document.getElementById('select-tema-config').addEventListener('change', function() {
+            listarPictogramasTema();
+            rellenarSelectorImagenes();
         });
 
         async function exportarZip() {
@@ -887,9 +1192,12 @@ function borrarImagenSeleccionada() {
             }
 
             crearOpcionesTematicas();
+            crearOpcionesTematicasConfig();
             crearBotonesTemas();
             cargarBotones();
             actualizarSelectorImagenesBorrar();
+            rellenarSelectorImagenes();
+            listarPictogramasTema();
 
             const msg = 'Importadas ' + importadas + ', omitidas ' + omitidas;
             document.getElementById('info-importar').textContent = msg;
