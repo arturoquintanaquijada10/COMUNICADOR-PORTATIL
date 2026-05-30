@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Comunicador</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
     <style>
         * {
             box-sizing: border-box;
@@ -585,11 +585,11 @@
                 <button class="btn-aceptar" onclick="guardarImagen()">GUARDAR</button>
             </div>
             <div style="margin-top: 15px; padding-top: 15px; border-top: 2px solid #ddd;">
-                <label>IMPORTAR/EXPORTAR:</label>
+                <label>CONFIGURACIÓN:</label>
                 <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                    <input type="file" id="input-importar" accept=".zip" style="display: none;" onchange="importarZip()">
-                    <button class="btn-importar" onclick="document.getElementById('input-importar').click()">IMPORTAR ZIP</button>
-                    <button class="btn-exportar" onclick="exportarZip()">EXPORTAR ZIP</button>
+                    <input type="file" id="input-importar" accept=".js" style="display: none;" onchange="importarConfig()">
+                    <button class="btn-importar" onclick="document.getElementById('input-importar').click()">IMPORTAR CONF</button>
+                    <button class="btn-exportar" onclick="exportarConfig()">EXPORTAR CONF</button>
                 </div>
                 <p id="info-importar" style="margin-top: 8px; font-size: 12px; color: #666;"></p>
             </div>
@@ -1098,110 +1098,92 @@ function borrarImagenSeleccionada() {
             rellenarSelectorImagenes();
         });
 
-        async function exportarZip() {
-            const zip = new JSZip();
-            let totalImagenes = 0;
+        function exportarConfig() {
+            const nuevosTemas = {};
+            let total = 0;
 
             temas.forEach(tema => {
-                const personalizadas = obtenerImagenesPersonalizadas(tema);
-                if (personalizadas.length > 0) {
-                    const carpeta = zip.folder(tema);
-                    personalizadas.forEach(item => {
-                        // Convertir data URL base64 a blob
-                        const datos = item.imagen.split(',')[1];
-                        if (datos) {
-                            // Determinar extensión por el tipo de dato
-                            const esPNG = item.imagen.includes('image/png');
-                            const ext = esPNG ? '.png' : '.jpg';
-                            
-                            carpeta.file(item.palabra + ext, datos, { base64: true });
-                            totalImagenes++;
-                        }
-                    });
-                }
+                const ocultos = JSON.parse(localStorage.getItem('ocultos_' + tema) || '[]');
+                const configItems = (configuracion.temas[tema] || [])
+                    .filter(item => !ocultos.includes(item.imagen));
+
+                const personalizados = obtenerImagenesPersonalizadas(tema);
+                const itemsArchivo = personalizados
+                    .filter(item => item.imagen && !item.imagen.startsWith('data:'))
+                    .map(item => ({
+                        palabra: item.palabra,
+                        imagen: item.imagen.replace(/^imagenes\//, '')
+                    }));
+
+                nuevosTemas[tema] = [...configItems, ...itemsArchivo];
+                total += nuevosTemas[tema].length;
             });
 
-            if (totalImagenes === 0) {
-                document.getElementById('info-importar').textContent = 'No hay imagenes para exportar';
-                return;
-            }
+            const configData = {
+                temas: nuevosTemas,
+                temas_info: configuracion.temas_info || {}
+            };
 
-            const contenido = await zip.generateAsync({ type: 'blob' });
+            const jsContent = 'const configuracion = ' + JSON.stringify(configData, null, 4) + ';';
+
+            const blob = new Blob([jsContent], { type: 'text/javascript' });
             const enlace = document.createElement('a');
-            enlace.href = URL.createObjectURL(contenido);
-            enlace.download = 'comunicador_imagenes.zip';
+            enlace.href = URL.createObjectURL(blob);
+            enlace.download = 'config.js';
             enlace.click();
             URL.revokeObjectURL(enlace.href);
 
-             document.getElementById('info-importar').textContent = 'Exportadas ' + totalImagenes + ' imagenes';
-         }
+            document.getElementById('info-importar').textContent = 'Exportados ' + total + ' pictogramas';
+        }
 
-        async function importarZip() {
+        async function importarConfig() {
             const archivo = document.getElementById('input-importar').files[0];
             if (!archivo) return;
 
-            const zip = new JSZip();
-            const contenido = await zip.loadAsync(archivo);
-            let importadas = 0;
-            let omitidas = 0;
-
-            const promises = [];
-            const temasAProcess = new Set();
-
-            contenido.forEach((relativePath, file) => {
-                if (file && !file.dir) {
-                    const partes = relativePath.split('/');
-                    if (partes.length >= 2) {
-                        const tema = partes[0];
-                        const nombreArchivo = partes[1];
-                        const nombreSinExt = nombreArchivo.replace(/\.[^/.]+$/, '').replace(/_/g, ' ').toUpperCase();
-
-                        temasAProcess.add(tema);
-
-                        // Crear el tema en configuracion si no existe
-                        if (!configuracion.temas[tema]) {
-                            configuracion.temas[tema] = [];
-                        }
-
-                        promises.push(file.async('base64').then(data => {
-                            const clave = 'imagenes_' + tema;
-                            const existentes = JSON.parse(localStorage.getItem(clave) || '[]');
-                            
-                            const yaExiste = existentes.some(item => item.palabra === nombreSinExt);
-                            if (yaExiste) {
-                                omitidas++;
-                                return;
-                            }
-
-                            existentes.push({
-                                palabra: nombreSinExt,
-                                imagen: 'data:image/jpeg;base64,' + data
-                            });
-                            localStorage.setItem(clave, JSON.stringify(existentes));
-                            importadas++;
-                        }));
-                    }
-                }
-            });
-
-            await Promise.all(promises);
-
-            if (temasAProcess.size > 0) {
-                temas = Object.keys(configuracion.temas);
-                localStorage.setItem('temas_custom', JSON.stringify(temas.filter(t => !configuracion.temas[t])));
+            const text = await archivo.text();
+            const match = text.match(/const\s+configuracion\s*=\s*(\{[\s\S]*?\});?\s*$/);
+            if (!match) {
+                alert('El archivo no tiene un formato valido.\nDebe contener: const configuracion = { ... };');
+                return;
             }
 
-            crearOpcionesTematicas();
-            crearOpcionesTematicasConfig();
-            crearBotonesTemas();
-            cargarBotones();
-            actualizarSelectorImagenesBorrar();
-            rellenarSelectorImagenes();
-            listarPictogramasTema();
+            try {
+                const nuevaConfig = new Function('return ' + match[1])();
 
-            const msg = 'Importadas ' + importadas + ', omitidas ' + omitidas;
-            document.getElementById('info-importar').textContent = msg;
-            leerPalabra('IMPORTADO');
+                if (!nuevaConfig.temas || typeof nuevaConfig.temas !== 'object') {
+                    alert('El archivo no contiene una configuracion de temas valida');
+                    return;
+                }
+
+                // Reemplazar la configuracion actual
+                Object.keys(configuracion).forEach(k => delete configuracion[k]);
+                Object.assign(configuracion, nuevaConfig);
+
+                // Limpiar ocultos (ahora estan incluidos en el config)
+                temas.forEach(tema => localStorage.removeItem('ocultos_' + tema));
+
+                // Limpiar personalizadas (el config importado es la unica fuente de verdad)
+                temas.forEach(tema => localStorage.removeItem('imagenes_' + tema));
+
+                // Actualizar temas
+                temas = Object.keys(configuracion.temas);
+                const temasPersonalizados = temas.filter(t => !temasOriginalesConfig.includes(t));
+                localStorage.setItem('temas_custom', JSON.stringify(temasPersonalizados));
+
+                // Regenerar UI
+                crearOpcionesTematicas();
+                crearOpcionesTematicasConfig();
+                crearBotonesTemas();
+                cargarBotones();
+                actualizarSelectorImagenesBorrar();
+                rellenarSelectorImagenes();
+                listarPictogramasTema();
+
+                document.getElementById('info-importar').textContent = 'Config importado correctamente';
+                leerPalabra('CONFIG IMPORTADO');
+            } catch(e) {
+                alert('Error al procesar el archivo: ' + e.message);
+            }
         }
     </script>
 </body>
