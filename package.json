@@ -1,0 +1,8 @@
+{
+  "name": "comunicador",
+  "version": "1.0.0",
+  "description": "Communication aid for autism using pictograms",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

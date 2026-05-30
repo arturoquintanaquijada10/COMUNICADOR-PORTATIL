@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comunicador</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+         #caja-texto {
+             width: 100%;
+             height: 100px;
+             font-size: 24px;
+             padding: 12px;
+             border: 3px solid #333;
+             background-color: #c8e6c9;
+             resize: none;
+             text-transform: uppercase;
+         }
+
+        .botones-superiores {
+            display: flex;
+            gap: 8px;
+            padding: 8px;
+            background-color: #fff;
+            flex-wrap: wrap;
+            justify-content: space-between;
+        }
+
+.btn-accion {
+            padding: 8px 20px;
+            font-size: 18px;
+            cursor: pointer;
+            border: 3px solid #333;
+            background-color: #4CAF50;
+            color: white;
+            border-radius: 10px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-accion:hover {
+            background-color: #45a049;
+        }
+
+        .btn-accion.borrar {
+            background-color: #f44336;
+        }
+
+        .btn-accion.borrar:hover {
+            background-color: #d32f2f;
+        }
+
+        .btn-accion:hover {
+            background-color: #45a049;
+        }
+
+        .btn-accion.cambiar {
+            background-color: #2196F3;
+        }
+
+        .btn-accion.cambiar:hover {
+            background-color: #1976D2;
+        }
+
+        .btn-accion.borrar {
+            background-color: #f44336;
+            min-width: auto;
+            width: auto;
+            padding: 8px 20px;
+            white-space: nowrap;
+        }
+
+        .btn-accion.borrar:hover {
+            background-color: #d32f2f;
+        }
+
+        .botones-temas {
+            display: flex;
+            gap: 8px;
+            padding: 8px;
+            background-color: #fff;
+            flex-wrap: wrap;
+        }
+
+        .btn-tema {
+            flex: 0 0 auto;
+            width: 180px;
+            aspect-ratio: 2 / 1;
+            cursor: pointer;
+            border: 3px solid #333;
+            background-color: white;
+            border-radius: 10px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.1s;
+        }
+
+        .btn-tema img {
+            width: 100%;
+            height: 75%;
+            object-fit: cover;
+        }
+
+        .btn-tema span {
+            height: 25%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: bold;
+            background-color: #eee;
+            text-transform: uppercase;
+        }
+
+        .btn-tema:hover {
+            transform: scale(1.05);
+            border-color: #4CAF50;
+        }
+
+        .btn-tema:active {
+            transform: scale(0.95);
+        }
+
+        .btn-tema.activo {
+            border-color: #FF9800;
+        }
+
+        .btn-tema.activo span {
+            background-color: #FF9800;
+            color: white;
+        }
+
+          #contenedor-botones {
+              flex: 1;
+              display: grid;
+              grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+              grid-auto-rows: min-content;
+              gap: 10px;
+              padding: 10px;
+              overflow-y: auto;
+              align-content: start;
+              background-color: #c8e6c9;
+          }
+
+        .boton-imagen {
+            width: 100%;
+            aspect-ratio: 1;
+            cursor: pointer;
+            border: 3px solid #333;
+            background-color: white;
+            border-radius: 10px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.1s;
+        }
+
+        .boton-imagen:hover {
+            transform: scale(1.05);
+            border-color: #4CAF50;
+        }
+
+        .boton-imagen:active {
+            transform: scale(0.95);
+        }
+
+        .boton-imagen img {
+            width: 100%;
+            height: 75%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .boton-imagen span {
+            height: 25%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: bold;
+            background-color: #eee;
+            text-transform: uppercase;
+        }
+
+        #btn-cargar {
+            position: fixed;
+            bottom: 15px;
+            right: 15px;
+            padding: 12px 18px;
+            font-size: 14px;
+            cursor: pointer;
+            border: 3px solid #333;
+            background-color: #9C27B0;
+            color: white;
+            border-radius: 10px;
+            font-weight: bold;
+            z-index: 100;
+        }
+
+        #btn-cargar:hover {
+            background-color: #7B1FA2;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.mostrar {
+            display: flex;
+        }
+
+        .modal-contenido {
+            background-color: white;
+            padding: 20px;
+            border-radius: 15px;
+            width: 95%;
+            max-width: 450px;
+        }
+
+        .modal-contenido h2 {
+            margin-bottom: 15px;
+            text-align: center;
+            font-size: 22px;
+        }
+
+        .modal-contenido label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .modal-contenido select,
+        .modal-contenido input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            margin-bottom: 12px;
+            border: 2px solid #333;
+            border-radius: 8px;
+        }
+
+        .modal-contenido input[type="file"] {
+            margin-bottom: 12px;
+        }
+
+        .modal-contenido button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border: 2px solid #333;
+            border-radius: 8px;
+            margin-right: 8px;
+        }
+
+        .btn-cancelar {
+            background-color: #f44336;
+            color: white;
+        }
+
+        .btn-aceptar {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        #vista-previa {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border: 2px solid #333;
+            border-radius: 8px;
+            margin-top: 8px;
+            display: none;
+        }
+
+        .btn-nuevo {
+            padding: 8px 12px;
+            font-size: 14px;
+            cursor: pointer;
+            border: 2px solid #333;
+            background-color: #4CAF50;
+            color: white;
+            border-radius: 8px;
+            font-weight: bold;
+            white-space: nowrap;
+            height: 44px;
+            display: flex;
+            align-items: center;
+        }
+
+        .btn-nuevo:hover {
+            background-color: #45a049;
+        }
+
+        #div-nuevo-tema {
+            padding: 10px;
+            background-color: #eee;
+            border-radius: 8px;
+        }
+
+         #div-nuevo-tema input {
+             width: 100%;
+             padding: 8px;
+             font-size: 14px;
+             margin-bottom: 10px;
+             border: 2px solid #333;
+             border-radius: 8px;
+         }
+
+         #select-tema {
+             padding: 10px;
+             font-size: 14px;
+             border: 2px solid #333;
+             border-radius: 8px;
+             height: 44px;
+             flex: 1;
+         }
+
+        #info-gestion {
+            text-align: center;
+        }
+
+        .btn-importar {
+            padding: 10px 20px;
+            font-size: 14px;
+            cursor: pointer;
+            border: 2px solid #333;
+            background-color: #FF9800;
+            color: white;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+
+        .btn-importar:hover {
+            background-color: #e68a00;
+        }
+
+        .btn-exportar {
+            padding: 10px 20px;
+            font-size: 14px;
+            cursor: pointer;
+            border: 2px solid #333;
+            background-color: #2196F3;
+            color: white;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+
+        .btn-exportar:hover {
+            background-color: #1976D2;
+        }
+
+        @media (max-width: 600px) {
+            #caja-texto {
+                height: 80px;
+                font-size: 20px;
+                padding: 10px;
+            }
+
+            .btn-accion {
+                padding: 8px 12px;
+                font-size: 16px;
+            }
+
+            .btn-tema {
+                width: 140px;
+            }
+
+            .btn-tema span {
+                font-size: 11px;
+            }
+
+            #contenedor-botones {
+                grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+                gap: 8px;
+                padding: 8px;
+            }
+
+            .boton-imagen span {
+                font-size: 11px;
+            }
+
+            #btn-cargar {
+                padding: 10px 15px;
+                font-size: 12px;
+                bottom: 10px;
+                right: 10px;
+            }
+
+            .modal-contenido {
+                padding: 15px;
+                margin: 10px;
+            }
+
+            .modal-contenido h2 {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <textarea id="caja-texto" placeholder="Escribe aquí..."></textarea>
+    
+    <div class="botones-superiores">
+        <button style="background:none; border:none; padding:0; cursor:pointer;" onclick="leerTexto()">
+            <img src="play.jpg" alt="LEER" style="height:60px;">
+        </button>
+        <button class="btn-accion borrar" onclick="borrarTexto()">BORRAR</button>
+    </div>
+    
+    <div id="botones-temas" class="botones-temas"></div>
+    
+    <div id="contenedor-botones"></div>
+
+    <button id="btn-cargar" onclick="abrirModal()">CONFIGURACION</button>
+
+    <div id="modal" class="modal">
+        <div class="modal-contenido">
+            <h2>GESTION DE IMAGENES</h2>
+            <label>TEMA:</label>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <select id="select-tema"></select>
+                <button class="btn-nuevo" onclick="mostrarNuevoTema()">+ NUEVO</button>
+                <button style="background:none; border:none; padding:0; cursor:pointer;" onclick="borrarTema()">
+                    <img src="borrar.png" alt="Borrar" style="height:35px;">
+                </button>
+            </div>
+            <div id="div-nuevo-tema" style="display: none; margin-top: 10px;">
+                <input type="text" id="input-nuevo-tema" placeholder="Nombre del nuevo tema...">
+                <button class="btn-aceptar" onclick="crearNuevoTema()">CREAR</button>
+                <button class="btn-cancelar" onclick="ocultarNuevoTema()">CANCELAR</button>
+            </div>
+            <label>PALABRA:</label>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <input type="text" id="input-palabra" placeholder="Escribe la palabra...">
+                <select id="select-imagen-borrar" style="display: none;"></select>
+                <button id="btn-borrar-imagen" style="display: none; background:none; border:none; padding:0; cursor:pointer;" onclick="borrarImagenSeleccionada()">
+                    <img src="borrar.png" alt="Borrar" style="height:35px;">
+                </button>
+            </div>
+            <div style="margin-top: 10px;">
+                <label>IMAGEN:</label>
+                <input type="file" id="input-archivo" accept="image/*" onchange="vistaPreviaImagen()">
+                <img id="vista-previa" alt="Vista previa">
+            </div>
+            <br><br>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button class="btn-cancelar" onclick="cerrarModal()">CERRAR</button>
+                <button class="btn-aceptar" onclick="guardarImagen()">GUARDAR</button>
+            </div>
+            <div style="margin-top: 15px; padding-top: 15px; border-top: 2px solid #ddd;">
+                <label>IMPORTAR/EXPORTAR:</label>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <input type="file" id="input-importar" accept=".zip" style="display: none;" onchange="importarZip()">
+                    <button class="btn-importar" onclick="document.getElementById('input-importar').click()">IMPORTAR ZIP</button>
+                    <button class="btn-exportar" onclick="exportarZip()">EXPORTAR ZIP</button>
+                </div>
+                <p id="info-importar" style="margin-top: 8px; font-size: 12px; color: #666;"></p>
+            </div>
+            <p id="info-gestion" style="margin-top: 15px; font-size: 14px; color: #666;"></p>
+        </div>
+    </div>
+
+    <script src="config.js"></script>
+    <script>
+        // Guardar los temas originales de config.js
+        const temasOriginalesConfig = Object.keys(configuracion.temas);
+        
+        let temas = Object.keys(configuracion.temas);
+        
+        // Recuperar temas personalizados guardados en localStorage
+        const temasPersonalizados = JSON.parse(localStorage.getItem('temas_custom') || '[]');
+        temasPersonalizados.forEach(tema => {
+            if (!configuracion.temas[tema]) {
+                configuracion.temas[tema] = [];
+            }
+            if (!temas.includes(tema)) {
+                temas.push(tema);
+            }
+        });
+        
+        let temaActual = 0;
+        let synthesis = window.speechSynthesis;
+        let imagenBase64 = '';
+
+        cargarBotones();
+        crearBotonesTemas();
+        crearOpcionesTematicas();
+
+        function crearOpcionesTematicas() {
+            const select = document.getElementById('select-tema');
+            select.innerHTML = '';
+            temas.forEach(tema => {
+                const option = document.createElement('option');
+                option.value = tema;
+                option.textContent = tema.toUpperCase();
+                select.appendChild(option);
+            });
+        }
+
+        function crearBotonesTemas() {
+            const contenedor = document.getElementById('botones-temas');
+            contenedor.innerHTML = '';
+            temas.forEach((tema, indice) => {
+                const info = configuracion.temas_info ? configuracion.temas_info[tema] : null;
+                const btn = document.createElement('div');
+                btn.className = 'btn-tema' + (indice === temaActual ? ' activo' : '');
+                if (info && info.imagen) {
+                    btn.innerHTML = `
+                        <img src="${encodeURI('imagenes/' + info.imagen).replace(/\?/g, '%3F')}" alt="${info.palabra}" onerror="this.style.display='none'">
+                        <span>${info.palabra}</span>
+                    `;
+                } else {
+                    btn.innerHTML = `
+                        <span style="height:100%;font-size:18px;">${tema.toUpperCase()}</span>
+                    `;
+                }
+                btn.onclick = () => seleccionarTema(indice);
+                contenedor.appendChild(btn);
+            });
+        }
+
+        function seleccionarTema(indice) {
+            temaActual = indice;
+            crearBotonesTemas();
+            cargarBotones();
+            leerPalabra(temas[temaActual]);
+        }
+
+        function cambiarTema() {
+            temaActual = (temaActual + 1) % temas.length;
+            crearBotonesTemas();
+            cargarBotones();
+        }
+
+        function cargarBotones() {
+            const tema = temas[temaActual];
+            crearBotonesTemas();
+            
+            const contenedor = document.getElementById('contenedor-botones');
+            contenedor.innerHTML = '';
+
+            const configItems = (configuracion.temas[tema] || []).map(item => ({
+                ...item,
+                imagen: 'imagenes/' + item.imagen
+            }));
+            const personalizados = obtenerImagenesPersonalizadas(tema);
+            const todosLosItems = [...configItems, ...personalizados];
+            todosLosItems.forEach(item => {
+                const boton = document.createElement('div');
+                boton.className = 'boton-imagen';
+                boton.innerHTML = `
+                    <img src="${encodeURI(item.imagen).replace(/\?/g, '%3F')}" alt="${item.palabra}" onerror="this.parentElement.style.display='none'">
+                    <span>${item.palabra}</span>
+                `;
+                boton.onclick = () => { agregarPalabra(item.palabra); leerPalabra(item.palabra); };
+                contenedor.appendChild(boton);
+            });
+        }
+
+        function obtenerImagenesPersonalizadas(tema) {
+            const guardadas = JSON.parse(localStorage.getItem('imagenes_' + tema) || '[]');
+            return guardadas;
+        }
+
+        function agregarPalabra(palabra) {
+            const caja = document.getElementById('caja-texto');
+            if (caja.value && !caja.value.endsWith(' ') && !caja.value.endsWith('\n')) {
+                caja.value += ' ';
+            }
+            caja.value += palabra;
+            caja.value = caja.value.toUpperCase();
+        }
+
+        function leerPalabra(palabra) {
+            synthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(palabra);
+            utterance.lang = 'es-ES';
+            utterance.rate = 0.9;
+            synthesis.speak(utterance);
+        }
+
+        function leerTexto() {
+            const texto = document.getElementById('caja-texto').value;
+            if (texto.trim()) {
+                synthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(texto);
+                utterance.lang = 'es-ES';
+                utterance.rate = 0.9;
+                synthesis.speak(utterance);
+            }
+        }
+
+        function borrarTexto() {
+            document.getElementById('caja-texto').value = '';
+        }
+
+        document.getElementById('caja-texto').addEventListener('input', function(e) {
+            this.value = this.value.toUpperCase();
+        });
+
+        function abrirModal() {
+            crearOpcionesTematicas();
+            document.getElementById('modal').classList.add('mostrar');
+            document.getElementById('input-palabra').value = '';
+            document.getElementById('input-archivo').value = '';
+            document.getElementById('vista-previa').style.display = 'none';
+            document.getElementById('div-nuevo-tema').style.display = 'none';
+            document.getElementById('input-nuevo-tema').value = '';
+            imagenBase64 = '';
+            actualizarInfoGestion();
+            actualizarSelectorImagenesBorrar();
+        }
+
+        function cerrarModal() {
+            document.getElementById('modal').classList.remove('mostrar');
+        }
+
+        function vistaPreviaImagen() {
+            const archivo = document.getElementById('input-archivo').files[0];
+            if (archivo) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    imagenBase64 = e.target.result;
+                    document.getElementById('vista-previa').src = imagenBase64;
+                    document.getElementById('vista-previa').style.display = 'block';
+                }
+                reader.readAsDataURL(archivo);
+            }
+        }
+
+        function guardarImagen() {
+            const tema = document.getElementById('select-tema').value;
+            const palabra = document.getElementById('input-palabra').value.trim().toUpperCase();
+            
+            if (!palabra || !imagenBase64) {
+                alert('Completa todos los campos');
+                return;
+            }
+
+            const clave = 'imagenes_' + tema;
+            const existentes = JSON.parse(localStorage.getItem(clave) || '[]');
+            existentes.push({ palabra: palabra, imagen: imagenBase64 });
+            localStorage.setItem(clave, JSON.stringify(existentes));
+
+            cerrarModal();
+            crearOpcionesTematicas();
+            cargarBotones();
+            leerPalabra('IMAGEN GUARDADA');
+        }
+
+        function mostrarNuevoTema() {
+            document.getElementById('div-nuevo-tema').style.display = 'block';
+            document.getElementById('input-nuevo-tema').focus();
+        }
+
+        function ocultarNuevoTema() {
+            document.getElementById('div-nuevo-tema').style.display = 'none';
+            document.getElementById('input-nuevo-tema').value = '';
+        }
+
+         function crearNuevoTema() {
+              const nombre = document.getElementById('input-nuevo-tema').value.trim().toLowerCase().replace(/\s+/g, '_');
+              if (!nombre) return;
+              
+              if (!configuracion.temas[nombre]) {
+                  configuracion.temas[nombre] = [];
+                  temas = Object.keys(configuracion.temas);
+                  
+                  // Guardar los temas personalizados en localStorage
+                  const temasPersonalizados = temas.filter(t => !temasOriginalesConfig.includes(t));
+                  localStorage.setItem('temas_custom', JSON.stringify(temasPersonalizados));
+              }
+              
+              ocultarNuevoTema();
+              crearOpcionesTematicas();
+              crearBotonesTemas();
+              cargarBotones();
+              actualizarInfoGestion();
+              leerPalabra('TEMA CREADO');
+          }
+
+         function borrarTema() {
+             const tema = document.getElementById('select-tema').value;
+             if (confirm('Borrar todo el tema "' + tema.toUpperCase() + '" y sus imagenes?')) {
+                 localStorage.removeItem('imagenes_' + tema);
+                 delete configuracion.temas[tema];
+                 if (temas.indexOf(tema) > 0) {
+                     temas = temas.filter(t => t !== tema);
+                     if (temaActual >= temas.length) temaActual = 0;
+                 }
+                 
+                 // Actualizar localStorage con los temas personalizados restantes
+                 const temasPersonalizados = temas.filter(t => !temasOriginalesConfig.includes(t));
+                 localStorage.setItem('temas_custom', JSON.stringify(temasPersonalizados));
+                 
+                 crearOpcionesTematicas();
+                 crearBotonesTemas();
+                 cargarBotones();
+                 actualizarInfoGestion();
+                 leerPalabra('TEMA BORRADO');
+             }
+         }
+
+        function obtenerTodasLasImagenes(tema) {
+            const configItems = (configuracion.temas[tema] || []).map(item => ({
+                ...item,
+                imagen: 'imagenes/' + item.imagen,
+                origen: 'config'
+            }));
+            const personalizados = obtenerImagenesPersonalizadas(tema).map(item => ({
+                ...item,
+                origen: 'local'
+            }));
+            return [...configItems, ...personalizados];
+        }
+
+        function actualizarSelectorImagenesBorrar() {
+            const tema = document.getElementById('select-tema').value;
+            const personalizados = obtenerImagenesPersonalizadas(tema);
+            const selectBorrar = document.getElementById('select-imagen-borrar');
+            const btnBorrar = document.getElementById('btn-borrar-imagen');
+            
+            if (personalizados.length > 0) {
+                selectBorrar.style.display = 'block';
+                btnBorrar.style.display = 'block';
+                selectBorrar.innerHTML = '';
+                personalizados.forEach((item, indice) => {
+                    const option = document.createElement('option');
+                    option.value = indice;
+                    option.textContent = item.palabra;
+                    selectBorrar.appendChild(option);
+                });
+            } else {
+                selectBorrar.style.display = 'none';
+                btnBorrar.style.display = 'none';
+            }
+        }
+
+function borrarImagenSeleccionada() {
+            const tema = document.getElementById('select-tema').value;
+            const indice = parseInt(document.getElementById('select-imagen-borrar').value);
+            const personalizados = obtenerImagenesPersonalizadas(tema);
+            const item = personalizados[indice];
+            
+            if (confirm('Borrar imagen "' + item.palabra + '"?')) {
+                personalizados.splice(indice, 1);
+                localStorage.setItem('imagenes_' + tema, JSON.stringify(personalizados));
+                cargarBotones();
+                actualizarSelectorImagenesBorrar();
+                actualizarInfoGestion();
+                leerPalabra('IMAGEN BORRADA');
+            }
+        }
+
+        function actualizarInfoGestion() {
+            const tema = document.getElementById('select-tema').value;
+            const todas = obtenerTodasLasImagenes(tema);
+            const personalizadas = obtenerImagenesPersonalizadas(tema);
+            const info = document.getElementById('info-gestion');
+            info.textContent = 'Tema: ' + tema.toUpperCase() + ' | Total: ' + todas.length + ' | Personalizadas: ' + personalizadas.length;
+        }
+
+        document.getElementById('select-tema').addEventListener('change', function() {
+            actualizarInfoGestion();
+            actualizarSelectorImagenesBorrar();
+        });
+
+        async function exportarZip() {
+            const zip = new JSZip();
+            let totalImagenes = 0;
+
+            temas.forEach(tema => {
+                const personalizadas = obtenerImagenesPersonalizadas(tema);
+                if (personalizadas.length > 0) {
+                    const carpeta = zip.folder(tema);
+                    personalizadas.forEach(item => {
+                        // Convertir data URL base64 a blob
+                        const datos = item.imagen.split(',')[1];
+                        if (datos) {
+                            // Determinar extensión por el tipo de dato
+                            const esPNG = item.imagen.includes('image/png');
+                            const ext = esPNG ? '.png' : '.jpg';
+                            
+                            carpeta.file(item.palabra + ext, datos, { base64: true });
+                            totalImagenes++;
+                        }
+                    });
+                }
+            });
+
+            if (totalImagenes === 0) {
+                document.getElementById('info-importar').textContent = 'No hay imagenes para exportar';
+                return;
+            }
+
+            const contenido = await zip.generateAsync({ type: 'blob' });
+            const enlace = document.createElement('a');
+            enlace.href = URL.createObjectURL(contenido);
+            enlace.download = 'comunicador_imagenes.zip';
+            enlace.click();
+            URL.revokeObjectURL(enlace.href);
+
+             document.getElementById('info-importar').textContent = 'Exportadas ' + totalImagenes + ' imagenes';
+         }
+
+        async function importarZip() {
+            const archivo = document.getElementById('input-importar').files[0];
+            if (!archivo) return;
+
+            const zip = new JSZip();
+            const contenido = await zip.loadAsync(archivo);
+            let importadas = 0;
+            let omitidas = 0;
+
+            const promises = [];
+            const temasAProcess = new Set();
+
+            contenido.forEach((relativePath, file) => {
+                if (file && !file.dir) {
+                    const partes = relativePath.split('/');
+                    if (partes.length >= 2) {
+                        const tema = partes[0];
+                        const nombreArchivo = partes[1];
+                        const nombreSinExt = nombreArchivo.replace(/\.[^/.]+$/, '').replace(/_/g, ' ').toUpperCase();
+
+                        temasAProcess.add(tema);
+
+                        // Crear el tema en configuracion si no existe
+                        if (!configuracion.temas[tema]) {
+                            configuracion.temas[tema] = [];
+                        }
+
+                        promises.push(file.async('base64').then(data => {
+                            const clave = 'imagenes_' + tema;
+                            const existentes = JSON.parse(localStorage.getItem(clave) || '[]');
+                            
+                            const yaExiste = existentes.some(item => item.palabra === nombreSinExt);
+                            if (yaExiste) {
+                                omitidas++;
+                                return;
+                            }
+
+                            existentes.push({
+                                palabra: nombreSinExt,
+                                imagen: 'data:image/jpeg;base64,' + data
+                            });
+                            localStorage.setItem(clave, JSON.stringify(existentes));
+                            importadas++;
+                        }));
+                    }
+                }
+            });
+
+            await Promise.all(promises);
+
+            if (temasAProcess.size > 0) {
+                temas = Object.keys(configuracion.temas);
+                localStorage.setItem('temas_custom', JSON.stringify(temas.filter(t => !configuracion.temas[t])));
+            }
+
+            crearOpcionesTematicas();
+            crearBotonesTemas();
+            cargarBotones();
+            actualizarSelectorImagenesBorrar();
+
+            const msg = 'Importadas ' + importadas + ', omitidas ' + omitidas;
+            document.getElementById('info-importar').textContent = msg;
+            leerPalabra('IMPORTADO');
+        }
+    </script>
+</body>
+</html>

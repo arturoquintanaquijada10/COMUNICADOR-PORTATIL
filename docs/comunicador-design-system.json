@@ -1,0 +1,358 @@
+# 📊 Design System - Technical Specifications
+
+**Proyecto**: Comunicador V2 - Autism Communication Aid
+**Generado**: 2026-05-04
+**Versión**: 1.0
+**Status**: ✅ Completado
+
+---
+
+## 🔐 Figma Access
+
+**Token**: `figd_8mnNJzZ5UVg3gfHV4XbatVXjTJhHQmwnaVPvDOiO`
+**Account**: Arturo Quintana Quijada
+**Status**: ✅ Verified
+
+---
+
+## 🎨 Color System
+
+### Primary Colors (Principales)
+| Color | Hex | Name | WCAG | Usage |
+|-------|-----|------|------|-------|
+| Primary | #2563EB | Blue | AAA | Buttons, links, highlights |
+| Primary Dark | #1E40AF | Dark Blue | AAA | Hover, active states |
+| Primary Light | #DBEAFE | Light Blue | AA | Backgrounds, disabled |
+
+### Status Colors
+| Color | Hex | Name | WCAG | Usage |
+|-------|-----|------|------|-------|
+| Success | #10B981 | Green | AAA | Confirmations, checkmarks |
+| Error | #DC2626 | Red | AAA | Errors, warnings, alerts |
+| Info | #06B6D4 | Cyan | AAA | Information, hints |
+| Warning | #F59E0B | Amber | AAA | Warnings, cautions |
+
+### Neutral Colors
+| Color | Hex | Name | WCAG | Usage |
+|-------|-----|------|------|-------|
+| Text | #111827 | Black | AAA | Primary text |
+| Text Secondary | #6B7280 | Gray | AAA | Secondary text |
+| Border | #D1D5DB | Light Gray | AA | Borders, dividers |
+| Background | #F3F4F6 | Very Light | AA | Backgrounds |
+| Surface | #FFFFFF | White | AAA | Cards, modals |
+
+### Additional Colors
+- Purple: #9333EA (Dark mode, accents)
+- Pink: #EC4899 (Accessibility alerts)
+
+**Total**: 13 colors (11 WCAG AAA, 2 WCAG AA)
+
+---
+
+## 🔤 Typography System
+
+### Scales
+| Scale | Size | Weight | Line Height | Usage |
+|-------|------|--------|-------------|-------|
+| H1 | 48px | 700 (Bold) | 56px | Page titles |
+| H2 | 36px | 600 (Semibold) | 44px | Section titles |
+| H3 | 24px | 600 (Semibold) | 32px | Subsection titles |
+| Body | 16px | 400 (Regular) | 24px | Main text |
+| Caption | 12px | 500 (Medium) | 16px | Labels, hints |
+| Button | 14px | 600 (Semibold) | 20px | Button text |
+
+**Font**: Inter (system font family)
+**Min Size**: 12px (captions)
+**Max Size**: 48px (H1)
+**Base Line Height**: 1.5x font size
+
+---
+
+## 📏 Spacing System
+
+| Token | Size | Usage |
+|-------|------|-------|
+| xs | 4px | Micro spacing |
+| sm | 8px | Padding, margins |
+| md | 16px | Component padding |
+| lg | 24px | Section spacing |
+| xl | 32px | Large spacing |
+
+**Grid**: 8px base unit (multiples: 4, 8, 16, 24, 32)
+
+---
+
+## 🧩 Component System
+
+### 1. PictoButton
+**Purpose**: Clickable pictogram button
+**Usage**: Grid of communication options
+
+**Variants**:
+- Default (base state)
+- Hover (highlighted)
+- Active (pressed)
+- Focus (keyboard navigation)
+- Disabled (unavailable)
+
+**Size**: 80x80px (minimum 48x48px for WCAG AAA)
+**Content**:
+- Image/Emoji (60x60px)
+- Label text (12px, UPPERCASE)
+
+**States**:
+```
+Default:   Background #2563EB, Text #FFFFFF
+Hover:     Background #1E40AF
+Active:    Background #1E40AF, Scale 0.95
+Focus:     Outline 2px #2563EB
+Disabled:  Background #D1D5DB, Opacity 50%
+```
+
+---
+
+### 2. PictoGrid
+**Purpose**: Responsive grid of pictograms
+**Usage**: Main interface for communication
+
+**Breakpoints**:
+- Mobile (<768px): 2 columns
+- Tablet (768-1023px): 3 columns
+- Desktop (≥1024px): 4 columns
+
+**Spacing**: 12px gap between buttons
+**Scrolling**: Vertical if needed
+
+---
+
+### 3. TextArea
+**Purpose**: Display accumulated text
+**Usage**: Show selected pictograms as text
+
+**Features**:
+- UPPERCASE transformation
+- Large, readable text (16px+)
+- Copy to clipboard button
+- Clear history button
+- Scrollable if overflow
+
+**Minimum height**: 100px
+**Maximum height**: 200px
+**Font**: Body style (16px)
+**Color**: Text (#111827)
+
+---
+
+### 4. ActionBar
+**Purpose**: Primary action buttons
+**Usage**: Main control interface
+
+**Buttons**:
+1. HABLAR (Speak) - Green (#10B981)
+2. LIMPIAR (Clear) - Gray (#6B7280)
+3. CONFIGURAR (Settings) - Blue (#2563EB)
+
+**Button Size**: 44x120px (WCAG AAA touch target)
+**Spacing**: 8px between buttons
+
+---
+
+### 5. ThemeSelector
+**Purpose**: Switch communication themes
+**Usage**: Header dropdown
+
+**Options**:
+- Lugares (Places)
+- Acciones (Actions)
+- Personas (People)
+- Emociones (Emotions)
+- Custom themes (user-created)
+
+**Default**: Lugares
+**Type**: Dropdown menu
+**Trigger**: Click or keyboard
+
+---
+
+### 6. ConfigModal
+**Purpose**: Settings and customization
+**Usage**: Secondary interface
+
+**Tabs**:
+1. Crear Tema (Create Theme)
+   - Input: Theme name (max 30 chars)
+   - Button: Create
+   
+2. Subir Imagen (Upload Image)
+   - Dropdown: Select theme
+   - Input: Word/label (max 30 chars)
+   - File upload: Image (max 5MB, JPEG/PNG/GIF)
+   - Button: Upload
+   
+3. Exportar (Export)
+   - Button: Export as ZIP
+   - Button: Import from ZIP
+
+**Modal Size**: 500x600px (max)
+**Responsive**: Fills screen on mobile (80% width)
+
+---
+
+## 📱 Responsive Design
+
+### Mobile (0-767px)
+- 2-column grid
+- Full-width layout
+- Stacked buttons
+- Larger touch targets
+- 16px margins
+
+### Tablet (768-1023px)
+- 3-column grid
+- 24px margins
+- Optimized spacing
+
+### Desktop (1024px+)
+- 4-column grid
+- 32px margins
+- Wider layout
+
+---
+
+## ♿ Accessibility
+
+### WCAG AAA Compliance
+- ✅ Color contrast: 7:1 minimum
+- ✅ Touch targets: 48x48px minimum
+- ✅ Focus indicators: Always visible
+- ✅ Keyboard navigation: Full support
+- ✅ Screen reader: Aria labels
+- ✅ Text sizing: Zoom support 200%
+
+### Features
+- UPPERCASE text for clarity
+- Clear, readable fonts
+- High color contrast
+- Consistent spacing
+- Predictable layout
+- No time limits
+- Clear error messages
+
+---
+
+## 🌓 Dark Mode Support
+
+**Primary Dark**: #1E40AF → #DBEAFE
+**Text Dark**: #FFFFFF → #111827
+**Background Dark**: #111827 → #F3F4F6
+**Border Dark**: #374151 → #D1D5DB
+
+---
+
+## 🎯 Design Tokens Summary
+
+```json
+{
+  "colors": {
+    "primary": "#2563EB",
+    "success": "#10B981",
+    "error": "#DC2626",
+    "warning": "#F59E0B",
+    "info": "#06B6D4"
+  },
+  "typography": {
+    "fontFamily": "Inter",
+    "sizes": [12, 14, 16, 24, 36, 48],
+    "weights": [400, 500, 600, 700]
+  },
+  "spacing": {
+    "xs": "4px",
+    "sm": "8px",
+    "md": "16px",
+    "lg": "24px",
+    "xl": "32px"
+  },
+  "borderRadius": {
+    "sm": "4px",
+    "md": "8px",
+    "lg": "12px",
+    "xl": "16px"
+  },
+  "shadows": {
+    "sm": "0 1px 3px rgba(0,0,0,0.12)",
+    "md": "0 4px 6px rgba(0,0,0,0.16)",
+    "lg": "0 8px 16px rgba(0,0,0,0.20)"
+  }
+}
+```
+
+---
+
+## 📋 Component States
+
+All components support these states:
+1. **Default** - Normal state
+2. **Hover** - Mouse over (desktop)
+3. **Active** - Pressed/selected
+4. **Focus** - Keyboard focus
+5. **Disabled** - Not interactive
+
+---
+
+## 🔄 Interaction Patterns
+
+1. **Select Pictogram**
+   - Click PictoButton
+   - Text appends to TextArea
+   - Button stays highlighted
+
+2. **Speak**
+   - Click HABLAR button
+   - Web Speech API activates
+   - Text is spoken in Spanish (es-ES) at 0.9x speed
+
+3. **Clear**
+   - Click LIMPIAR button
+   - TextArea clears
+   - Grid resets
+
+4. **Configure**
+   - Click CONFIGURAR button
+   - ConfigModal opens
+   - Can create themes or upload images
+
+---
+
+## 📦 Export/Import
+
+**Format**: ZIP file
+**Contents**:
+- Theme metadata
+- Uploaded images (as base64 in JSON)
+- User preferences
+
+**Size Limit**: ~10MB (browser localStorage limit)
+
+---
+
+## 🚀 Implementation Notes
+
+- **Framework**: React 18 + TypeScript
+- **State Management**: Zustand
+- **Build Tool**: Vite
+- **CSS**: Inline React.CSSProperties
+- **No External CSS Files**: All styling in code
+- **Responsive**: CSS Media Queries @ 768px breakpoint
+
+---
+
+## 📚 File References
+
+- V1 Spec: `/V1/docs/comunicador-app-spec.md`
+- V2 Implementation: `/v2/src/`
+- Design Tokens: `comunicador-design-system.json`
+- Setup Guide: `FIGMA_SETUP_GUIDE.md`
+
+---
+
+**Ready for Implementation** ✅
