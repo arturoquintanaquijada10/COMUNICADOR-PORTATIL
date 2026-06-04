@@ -1,4 +1,5 @@
 const configuracion = {
+    clave_acceso: 'sonrie',
     temas: {
         lugares: [
             { imagen: 'TU.png', palabra: 'TU' },

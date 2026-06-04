@@ -181,6 +181,38 @@
             transform: scale(0.95);
         }
 
+        .boton-imagen.arrastrable {
+            cursor: grab;
+        }
+
+        .boton-imagen.arrastrable:active {
+            cursor: grabbing;
+        }
+
+        .boton-imagen.arrastrando {
+            opacity: 0.4;
+        }
+
+        .boton-imagen.drop-target {
+            border-color: #2196F3;
+            transform: scale(1.05);
+        }
+
+        #hint-orden {
+            display: none;
+            text-align: center;
+            padding: 6px;
+            font-size: 12px;
+            font-weight: bold;
+            color: #1976D2;
+            background: #e3f2fd;
+            border-bottom: 1px solid #bbdefb;
+        }
+
+        #hint-orden.visible {
+            display: block;
+        }
+
         .boton-imagen img {
             width: 100%;
             height: 75%;
@@ -601,7 +633,9 @@
     </div>
     
     <div id="botones-temas" class="botones-temas"></div>
-    
+
+    <div id="hint-orden">✋ MODO EDICIÓN — ARRASTRA LOS PICTOGRAMAS PARA REORDENAR</div>
+
     <div id="contenedor-botones"></div>
 
     <button id="btn-bloqueo" onclick="toggleConfig()">⚙️</button>
@@ -745,6 +779,7 @@
         let temaActual = 0;
         let synthesis = window.speechSynthesis;
         let imagenBase64 = '';
+        let configBloqueada = true;
 
         cargarBotones();
         crearBotonesTemas();
@@ -812,29 +847,155 @@
         function cargarBotones() {
             const tema = temas[temaActual];
             crearBotonesTemas();
-            
+
             const contenedor = document.getElementById('contenedor-botones');
             contenedor.innerHTML = '';
 
+            const todosLosItems = obtenerItemsVisibles(tema);
+            const arrastrable = !configBloqueada;
+
+            todosLosItems.forEach(item => {
+                const boton = document.createElement('div');
+                boton.className = 'boton-imagen' + (arrastrable ? ' arrastrable' : '');
+                boton.dataset.id = item.idItem;
+                if (arrastrable) boton.draggable = true;
+                boton.innerHTML = `
+                    <img src="${encodeURI(item.imagen).replace(/\?/g, '%3F')}" alt="${item.palabra}" onerror="this.parentElement.style.display='none'">
+                    <span>${item.palabra}</span>
+                `;
+                if (!arrastrable) {
+                    boton.onclick = () => { agregarPalabra(item.palabra); leerPalabra(item.palabra); };
+                }
+                contenedor.appendChild(boton);
+            });
+
+            if (arrastrable) {
+                instalarDragAndDrop();
+            } else {
+                contenedor.ondragstart = null;
+                contenedor.ondragover = null;
+                contenedor.ondragenter = null;
+                contenedor.ondragleave = null;
+                contenedor.ondrop = null;
+                contenedor.ondragend = null;
+            }
+        }
+
+        function obtenerItemsVisibles(tema) {
             const ocultos = JSON.parse(localStorage.getItem('ocultos_' + tema) || '[]');
             const configItems = (configuracion.temas[tema] || [])
                 .filter(item => !ocultos.includes(item.imagen))
                 .map(item => ({
                     ...item,
-                    imagen: 'imagenes/' + item.imagen
+                    imagen: 'imagenes/' + item.imagen,
+                    origen: 'cfg',
+                    idItem: 'cfg:' + item.imagen
                 }));
-            const personalizados = obtenerImagenesPersonalizadas(tema);
-            const todosLosItems = [...configItems, ...personalizados];
-            todosLosItems.forEach(item => {
-                const boton = document.createElement('div');
-                boton.className = 'boton-imagen';
-                boton.innerHTML = `
-                    <img src="${encodeURI(item.imagen).replace(/\?/g, '%3F')}" alt="${item.palabra}" onerror="this.parentElement.style.display='none'">
-                    <span>${item.palabra}</span>
-                `;
-                boton.onclick = () => { agregarPalabra(item.palabra); leerPalabra(item.palabra); };
-                contenedor.appendChild(boton);
+            const personalizados = obtenerImagenesPersonalizadas(tema).map((item, idx) => ({
+                ...item,
+                origen: 'loc',
+                idItem: 'loc:' + idx + ':' + item.palabra
+            }));
+            return aplicarOrdenGuardado(tema, [...configItems, ...personalizados]);
+        }
+
+        function obtenerOrdenGuardado(tema) {
+            try {
+                const raw = localStorage.getItem('orden_' + tema);
+                if (!raw) return null;
+                const arr = JSON.parse(raw);
+                return Array.isArray(arr) ? arr : null;
+            } catch(e) { return null; }
+        }
+
+        function aplicarOrdenGuardado(tema, items) {
+            const orden = obtenerOrdenGuardado(tema);
+            if (!orden || orden.length === 0) return items;
+
+            const mapa = new Map(items.map(it => [it.idItem, it]));
+            const resultado = [];
+            const usados = new Set();
+
+            orden.forEach(id => {
+                if (mapa.has(id) && !usados.has(id)) {
+                    resultado.push(mapa.get(id));
+                    usados.add(id);
+                }
             });
+
+            items.forEach(it => {
+                if (!usados.has(it.idItem)) resultado.push(it);
+            });
+
+            return resultado;
+        }
+
+        function guardarOrden(tema, idsEnOrden) {
+            localStorage.setItem('orden_' + tema, JSON.stringify(idsEnOrden));
+        }
+
+        function instalarDragAndDrop() {
+            const contenedor = document.getElementById('contenedor-botones');
+            const botones = contenedor.querySelectorAll('.boton-imagen.arrastrable');
+
+            botones.forEach(boton => {
+                boton.addEventListener('dragstart', e => {
+                    e.dataTransfer.setData('text/plain', boton.dataset.id);
+                    e.dataTransfer.effectAllowed = 'move';
+                    boton.classList.add('arrastrando');
+                });
+
+                boton.addEventListener('dragend', () => {
+                    boton.classList.remove('arrastrando');
+                    contenedor.querySelectorAll('.boton-imagen.drop-target')
+                        .forEach(el => el.classList.remove('drop-target'));
+                });
+
+                boton.addEventListener('dragover', e => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                });
+
+                boton.addEventListener('dragenter', e => {
+                    e.preventDefault();
+                    if (!boton.classList.contains('arrastrando')) {
+                        boton.classList.add('drop-target');
+                    }
+                });
+
+                boton.addEventListener('dragleave', e => {
+                    if (e.target === boton) {
+                        boton.classList.remove('drop-target');
+                    }
+                });
+
+                boton.addEventListener('drop', e => {
+                    e.preventDefault();
+                    const idOrigen = e.dataTransfer.getData('text/plain');
+                    const idDestino = boton.dataset.id;
+                    boton.classList.remove('drop-target');
+                    if (idOrigen && idDestino && idOrigen !== idDestino) {
+                        reordenarItems(idOrigen, idDestino);
+                    }
+                });
+            });
+        }
+
+        function reordenarItems(idOrigen, idDestino) {
+            const tema = temas[temaActual];
+            const contenedor = document.getElementById('contenedor-botones');
+            const ordenActual = Array.from(contenedor.querySelectorAll('.boton-imagen'))
+                .map(el => el.dataset.id);
+
+            const idxOrigen = ordenActual.indexOf(idOrigen);
+            const idxDestino = ordenActual.indexOf(idDestino);
+            if (idxOrigen < 0 || idxDestino < 0) return;
+
+            ordenActual.splice(idxOrigen, 1);
+            ordenActual.splice(idxDestino, 0, idOrigen);
+
+            guardarOrden(tema, ordenActual);
+            cargarBotones();
         }
 
         function obtenerImagenesPersonalizadas(tema) {
@@ -937,11 +1098,10 @@
             document.getElementById('modal-importar').classList.remove('mostrar');
         }
 
-        let configBloqueada = true;
-
         function toggleConfig() {
             const botones = document.getElementById('botones-inferiores');
             const btn = document.getElementById('btn-bloqueo');
+            const hint = document.getElementById('hint-orden');
             if (configBloqueada) {
                 const clave = configuracion.clave_acceso || 'sonrie';
                 const respuesta = prompt('Introduce la contraseña:');
@@ -954,11 +1114,15 @@
                 botones.classList.add('visible');
                 btn.classList.add('desbloqueado');
                 btn.textContent = '🔓';
+                hint.classList.add('visible');
+                cargarBotones();
             } else {
                 configBloqueada = true;
                 botones.classList.remove('visible');
                 btn.classList.remove('desbloqueado');
                 btn.textContent = '⚙️';
+                hint.classList.remove('visible');
+                cargarBotones();
             }
         }
 
@@ -1069,6 +1233,7 @@
               const tema = document.getElementById('select-tema').value;
               if (confirm('Borrar todo el tema "' + tema.toUpperCase() + '" y sus imagenes?')) {
                   localStorage.removeItem('imagenes_' + tema);
+                  localStorage.removeItem('orden_' + tema);
                   delete configuracion.temas[tema];
                   delete configuracion.temas_info[tema];
                   const infoCustom = JSON.parse(localStorage.getItem('temas_info_custom') || '{}');
@@ -1314,20 +1479,16 @@
             let total = 0;
 
             temas.forEach(tema => {
-                const ocultos = JSON.parse(localStorage.getItem('ocultos_' + tema) || '[]');
-                const configItems = (configuracion.temas[tema] || [])
-                    .filter(item => !ocultos.includes(item.imagen));
-
-                const personalizados = obtenerImagenesPersonalizadas(tema);
-                const itemsArchivo = personalizados
+                const itemsVisibles = obtenerItemsVisibles(tema);
+                const itemsArchivo = itemsVisibles
                     .filter(item => item.imagen && !item.imagen.startsWith('data:'))
                     .map(item => ({
                         palabra: item.palabra,
                         imagen: item.imagen.replace(/^imagenes\//, '')
                     }));
 
-                nuevosTemas[tema] = [...configItems, ...itemsArchivo];
-                total += nuevosTemas[tema].length;
+                nuevosTemas[tema] = itemsArchivo;
+                total += itemsArchivo.length;
             });
 
             const configData = {
@@ -1370,14 +1531,21 @@
                 }
 
                 // Reemplazar la configuracion actual
+                const claveActual = configuracion.clave_acceso || 'sonrie';
                 Object.keys(configuracion).forEach(k => delete configuracion[k]);
                 Object.assign(configuracion, nuevaConfig);
+
+                // Preservar la clave de acceso: nunca se importa, solo se define en config.js
+                configuracion.clave_acceso = claveActual;
 
                 // Limpiar ocultos (ahora estan incluidos en el config)
                 temas.forEach(tema => localStorage.removeItem('ocultos_' + tema));
 
                 // Limpiar personalizadas (el config importado es la unica fuente de verdad)
                 temas.forEach(tema => localStorage.removeItem('imagenes_' + tema));
+
+                // Limpiar ordenes guardados del estado anterior
+                temas.forEach(tema => localStorage.removeItem('orden_' + tema));
 
                 // Actualizar temas y reiniciar seleccion
                 temas = Object.keys(configuracion.temas);
@@ -1390,6 +1558,20 @@
 
                 const temasPersonalizados = temas.filter(t => !temasOriginalesConfig.includes(t));
                 localStorage.setItem('temas_custom', JSON.stringify(temasPersonalizados));
+
+                // Generar orden guardado desde el orden del archivo importado
+                // Para temas originales: IDs 'cfg:{imagen}'
+                // Para temas personalizados: IDs 'loc:{idx}:{palabra}' (mismo formato que obtenerItemsVisibles)
+                temas.forEach(tema => {
+                    const items = configuracion.temas[tema] || [];
+                    let ids;
+                    if (temasPersonalizados.includes(tema)) {
+                        ids = items.map((item, idx) => 'loc:' + idx + ':' + item.palabra);
+                    } else {
+                        ids = items.map(item => 'cfg:' + item.imagen);
+                    }
+                    localStorage.setItem('orden_' + tema, JSON.stringify(ids));
+                });
 
                 // Persistir items de temas personalizados para que sobrevivan a recarga
                 const infoCustom = JSON.parse(localStorage.getItem('temas_info_custom') || '{}');
