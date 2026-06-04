@@ -149,19 +149,15 @@
 
           #contenedor-botones {
               flex: 1;
-              display: grid;
-              grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-              grid-auto-rows: min-content;
-              gap: 10px;
-              padding: 10px;
-              overflow-y: auto;
-              align-content: start;
+              position: relative;
+              overflow: auto;
               background-color: #c8e6c9;
           }
 
         .boton-imagen {
-            width: 100%;
-            aspect-ratio: 1;
+            position: absolute;
+            width: 100px;
+            height: 100px;
             cursor: pointer;
             border: 3px solid #333;
             background-color: white;
@@ -169,12 +165,12 @@
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            transition: transform 0.1s;
+            transition: transform 0.1s, box-shadow 0.1s, border-color 0.1s;
         }
 
         .boton-imagen:hover {
-            transform: scale(1.05);
             border-color: #4CAF50;
+            box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.3);
         }
 
         .boton-imagen:active {
@@ -196,6 +192,23 @@
         .boton-imagen.drop-target {
             border-color: #2196F3;
             transform: scale(1.05);
+            z-index: 2;
+        }
+
+        #drop-preview {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            border: 2px dashed #2196F3;
+            border-radius: 10px;
+            background: rgba(33, 150, 243, 0.1);
+            pointer-events: none;
+            display: none;
+            z-index: 1;
+        }
+
+        #drop-preview.visible {
+            display: block;
         }
 
         #hint-orden {
@@ -785,6 +798,13 @@
         crearBotonesTemas();
         crearOpcionesTematicas();
         crearOpcionesTematicasPalabras();
+        instalarDragAndDropContenedor();
+
+        let resizeTimer = null;
+        window.addEventListener('resize', () => {
+            if (resizeTimer) clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(() => cargarBotones(), 150);
+        });
 
         function crearOpcionesTematicasPalabras() {
             const select = document.getElementById('select-tema-palabras');
@@ -844,21 +864,38 @@
             cargarBotones();
         }
 
+        let idArrastrando = null;
+
         function cargarBotones() {
             const tema = temas[temaActual];
             crearBotonesTemas();
 
             const contenedor = document.getElementById('contenedor-botones');
-            contenedor.innerHTML = '';
+            contenedor.querySelectorAll('.boton-imagen').forEach(el => el.remove());
 
-            const todosLosItems = obtenerItemsVisibles(tema);
+            const colsVisibles = Math.max(1, Math.floor((window.innerWidth - 40) / 110));
+            const filasVisibles = Math.max(1, Math.floor((window.innerHeight - 200) / 110));
+
+            const posGuardadas = obtenerPosiciones(tema);
+            if (posGuardadas && Object.keys(posGuardadas).length > 0) {
+                compactarPosiciones(tema, posGuardadas, colsVisibles, filasVisibles);
+            }
+
+            const itemsVisibles = obtenerItemsVisibles(tema);
+            const itemsConPos = obtenerItemsConPosicion(tema, itemsVisibles);
+            const tam = calcularTamanoTablero(itemsConPos);
+            contenedor.style.minWidth = (tam.cols * 100) + 'px';
+            contenedor.style.minHeight = (tam.filas * 100) + 'px';
+
             const arrastrable = !configBloqueada;
 
-            todosLosItems.forEach(item => {
+            itemsConPos.forEach(item => {
                 const boton = document.createElement('div');
                 boton.className = 'boton-imagen' + (arrastrable ? ' arrastrable' : '');
                 boton.dataset.id = item.idItem;
                 if (arrastrable) boton.draggable = true;
+                boton.style.left = (item.col * 100) + 'px';
+                boton.style.top = (item.fila * 100) + 'px';
                 boton.innerHTML = `
                     <img src="${encodeURI(item.imagen).replace(/\?/g, '%3F')}" alt="${item.palabra}" onerror="this.parentElement.style.display='none'">
                     <span>${item.palabra}</span>
@@ -870,14 +907,7 @@
             });
 
             if (arrastrable) {
-                instalarDragAndDrop();
-            } else {
-                contenedor.ondragstart = null;
-                contenedor.ondragover = null;
-                contenedor.ondragenter = null;
-                contenedor.ondragleave = null;
-                contenedor.ondrop = null;
-                contenedor.ondragend = null;
+                instalarDragAndDropHijos();
             }
         }
 
@@ -934,68 +964,206 @@
             localStorage.setItem('orden_' + tema, JSON.stringify(idsEnOrden));
         }
 
-        function instalarDragAndDrop() {
+        function obtenerItemsConPosicion(tema, items) {
+            const posiciones = obtenerPosiciones(tema) || {};
+            const colsVisibles = Math.max(1, Math.floor((window.innerWidth - 40) / 110));
+
+            const asignadas = new Map();
+            items.forEach(item => {
+                if (posiciones[item.idItem]) {
+                    asignadas.set(item.idItem, posiciones[item.idItem]);
+                }
+            });
+
+            const ocupadas = new Set();
+            asignadas.forEach(p => {
+                if (p.col >= 0 && p.fila >= 0) {
+                    ocupadas.add(p.col + ',' + p.fila);
+                }
+            });
+
+            function siguienteLibre() {
+                let col = 0, fila = 0;
+                while (ocupadas.has(col + ',' + fila)) {
+                    col++;
+                    if (col >= colsVisibles) {
+                        col = 0;
+                        fila++;
+                    }
+                }
+                ocupadas.add(col + ',' + fila);
+                return { col, fila };
+            }
+
+            return items.map(item => {
+                if (asignadas.has(item.idItem)) {
+                    const p = asignadas.get(item.idItem);
+                    return { ...item, col: p.col, fila: p.fila };
+                }
+                const p = siguienteLibre();
+                return { ...item, col: p.col, fila: p.fila };
+            });
+        }
+
+        function compactarPosiciones(tema, posiciones, colsVisibles, filasVisibles) {
+            if (!posiciones || Object.keys(posiciones).length === 0) return posiciones;
+
+            const resultado = {};
+            const ocupadas = new Set();
+            let cambios = false;
+
+            Object.keys(posiciones).forEach(id => {
+                const p = posiciones[id];
+                if (p.col >= 0 && p.col < colsVisibles && p.fila >= 0 && p.fila < filasVisibles) {
+                    const key = p.col + ',' + p.fila;
+                    if (!ocupadas.has(key)) {
+                        resultado[id] = p;
+                        ocupadas.add(key);
+                    } else {
+                        cambios = true;
+                    }
+                } else {
+                    cambios = true;
+                }
+            });
+
+            if (cambios) {
+                const idsAReasignar = Object.keys(posiciones).filter(id => !resultado[id]);
+                idsAReasignar.forEach(id => {
+                    let col = 0, fila = 0;
+                    while (ocupadas.has(col + ',' + fila)) {
+                        col++;
+                        if (col >= colsVisibles) {
+                            col = 0;
+                            fila++;
+                        }
+                    }
+                    resultado[id] = { col, fila };
+                    ocupadas.add(col + ',' + fila);
+                });
+                guardarPosiciones(tema, resultado);
+            }
+
+            return resultado;
+        }
+
+        function calcularTamanoTablero(itemsConPos) {
+            const colsVisibles = Math.max(1, Math.floor((window.innerWidth - 40) / 110));
+            const filasVisibles = Math.max(1, Math.floor((window.innerHeight - 200) / 110));
+
+            let maxCol = 0, maxFila = 0;
+            itemsConPos.forEach(item => {
+                if (item.col > maxCol) maxCol = item.col;
+                if (item.fila > maxFila) maxFila = item.fila;
+            });
+
+            return {
+                cols: Math.max(maxCol + 2, colsVisibles),
+                filas: Math.max(maxFila + 2, filasVisibles)
+            };
+        }
+
+        function obtenerPosiciones(tema) {
+            try {
+                const raw = localStorage.getItem('posiciones_' + tema);
+                if (!raw) return null;
+                const obj = JSON.parse(raw);
+                return (obj && typeof obj === 'object' && !Array.isArray(obj)) ? obj : null;
+            } catch(e) { return null; }
+        }
+
+        function guardarPosiciones(tema, posiciones) {
+            localStorage.setItem('posiciones_' + tema, JSON.stringify(posiciones));
+        }
+
+        function moverPicto(id, col, fila) {
+            const tema = temas[temaActual];
+            const posiciones = obtenerPosiciones(tema) || {};
+
+            let idEnDestino = null;
+            Object.keys(posiciones).forEach(k => {
+                if (posiciones[k].col === col && posiciones[k].fila === fila) {
+                    idEnDestino = k;
+                }
+            });
+
+            if (idEnDestino && idEnDestino !== id) {
+                const posOrigen = posiciones[id];
+                if (posOrigen) {
+                    posiciones[idEnDestino] = { col: posOrigen.col, fila: posOrigen.fila };
+                } else {
+                    delete posiciones[idEnDestino];
+                }
+            }
+
+            posiciones[id] = { col, fila };
+            guardarPosiciones(tema, posiciones);
+            cargarBotones();
+        }
+
+        function instalarDragAndDropContenedor() {
+            const contenedor = document.getElementById('contenedor-botones');
+            const preview = document.createElement('div');
+            preview.id = 'drop-preview';
+            contenedor.appendChild(preview);
+
+            contenedor.addEventListener('dragover', e => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                if (!idArrastrando) return;
+
+                const rect = contenedor.getBoundingClientRect();
+                const x = e.clientX - rect.left + contenedor.scrollLeft;
+                const y = e.clientY - rect.top + contenedor.scrollTop;
+                const col = Math.max(0, Math.floor(x / 100));
+                const fila = Math.max(0, Math.floor(y / 100));
+
+                preview.style.left = (col * 100) + 'px';
+                preview.style.top = (fila * 100) + 'px';
+                preview.classList.add('visible');
+            });
+
+            contenedor.addEventListener('dragleave', e => {
+                if (e.target === contenedor) {
+                    preview.classList.remove('visible');
+                }
+            });
+
+            contenedor.addEventListener('drop', e => {
+                e.preventDefault();
+                preview.classList.remove('visible');
+                const id = e.dataTransfer.getData('text/plain');
+                if (!id) return;
+
+                const rect = contenedor.getBoundingClientRect();
+                const x = e.clientX - rect.left + contenedor.scrollLeft;
+                const y = e.clientY - rect.top + contenedor.scrollTop;
+                const col = Math.max(0, Math.floor(x / 100));
+                const fila = Math.max(0, Math.floor(y / 100));
+
+                moverPicto(id, col, fila);
+            });
+        }
+
+        function instalarDragAndDropHijos() {
             const contenedor = document.getElementById('contenedor-botones');
             const botones = contenedor.querySelectorAll('.boton-imagen.arrastrable');
 
             botones.forEach(boton => {
                 boton.addEventListener('dragstart', e => {
-                    e.dataTransfer.setData('text/plain', boton.dataset.id);
+                    idArrastrando = boton.dataset.id;
+                    e.dataTransfer.setData('text/plain', idArrastrando);
                     e.dataTransfer.effectAllowed = 'move';
                     boton.classList.add('arrastrando');
                 });
 
                 boton.addEventListener('dragend', () => {
                     boton.classList.remove('arrastrando');
-                    contenedor.querySelectorAll('.boton-imagen.drop-target')
-                        .forEach(el => el.classList.remove('drop-target'));
-                });
-
-                boton.addEventListener('dragover', e => {
-                    e.preventDefault();
-                    e.dataTransfer.dropEffect = 'move';
-                });
-
-                boton.addEventListener('dragenter', e => {
-                    e.preventDefault();
-                    if (!boton.classList.contains('arrastrando')) {
-                        boton.classList.add('drop-target');
-                    }
-                });
-
-                boton.addEventListener('dragleave', e => {
-                    if (e.target === boton) {
-                        boton.classList.remove('drop-target');
-                    }
-                });
-
-                boton.addEventListener('drop', e => {
-                    e.preventDefault();
-                    const idOrigen = e.dataTransfer.getData('text/plain');
-                    const idDestino = boton.dataset.id;
-                    boton.classList.remove('drop-target');
-                    if (idOrigen && idDestino && idOrigen !== idDestino) {
-                        reordenarItems(idOrigen, idDestino);
-                    }
+                    idArrastrando = null;
+                    const preview = document.getElementById('drop-preview');
+                    if (preview) preview.classList.remove('visible');
                 });
             });
-        }
-
-        function reordenarItems(idOrigen, idDestino) {
-            const tema = temas[temaActual];
-            const contenedor = document.getElementById('contenedor-botones');
-            const ordenActual = Array.from(contenedor.querySelectorAll('.boton-imagen'))
-                .map(el => el.dataset.id);
-
-            const idxOrigen = ordenActual.indexOf(idOrigen);
-            const idxDestino = ordenActual.indexOf(idDestino);
-            if (idxOrigen < 0 || idxDestino < 0) return;
-
-            ordenActual.splice(idxOrigen, 1);
-            ordenActual.splice(idxDestino, 0, idOrigen);
-
-            guardarOrden(tema, ordenActual);
-            cargarBotones();
         }
 
         function obtenerImagenesPersonalizadas(tema) {
@@ -1234,6 +1402,7 @@
               if (confirm('Borrar todo el tema "' + tema.toUpperCase() + '" y sus imagenes?')) {
                   localStorage.removeItem('imagenes_' + tema);
                   localStorage.removeItem('orden_' + tema);
+                  localStorage.removeItem('posiciones_' + tema);
                   delete configuracion.temas[tema];
                   delete configuracion.temas_info[tema];
                   const infoCustom = JSON.parse(localStorage.getItem('temas_info_custom') || '{}');
@@ -1476,24 +1645,45 @@
 
         function exportarConfig() {
             const nuevosTemas = {};
+            const posicionesPorTema = {};
             let total = 0;
 
             temas.forEach(tema => {
                 const itemsVisibles = obtenerItemsVisibles(tema);
-                const itemsArchivo = itemsVisibles
+                const itemsConPos = obtenerItemsConPosicion(tema, itemsVisibles);
+                const idsExportados = new Set();
+
+                const itemsArchivo = itemsConPos
                     .filter(item => item.imagen && !item.imagen.startsWith('data:'))
-                    .map(item => ({
-                        palabra: item.palabra,
-                        imagen: item.imagen.replace(/^imagenes\//, '')
-                    }));
+                    .map(item => {
+                        idsExportados.add(item.idItem);
+                        return {
+                            palabra: item.palabra,
+                            imagen: item.imagen.replace(/^imagenes\//, '')
+                        };
+                    });
 
                 nuevosTemas[tema] = itemsArchivo;
                 total += itemsArchivo.length;
+
+                const posGuardadas = obtenerPosiciones(tema);
+                if (posGuardadas) {
+                    const posFiltradas = {};
+                    Object.keys(posGuardadas).forEach(id => {
+                        if (idsExportados.has(id)) {
+                            posFiltradas[id] = posGuardadas[id];
+                        }
+                    });
+                    if (Object.keys(posFiltradas).length > 0) {
+                        posicionesPorTema[tema] = posFiltradas;
+                    }
+                }
             });
 
             const configData = {
                 temas: nuevosTemas,
-                temas_info: configuracion.temas_info || {}
+                temas_info: configuracion.temas_info || {},
+                posiciones: posicionesPorTema
             };
 
             const jsContent = 'const configuracion = ' + JSON.stringify(configData, null, 4) + ';';
@@ -1547,6 +1737,9 @@
                 // Limpiar ordenes guardados del estado anterior
                 temas.forEach(tema => localStorage.removeItem('orden_' + tema));
 
+                // Limpiar posiciones guardadas del estado anterior
+                temas.forEach(tema => localStorage.removeItem('posiciones_' + tema));
+
                 // Actualizar temas y reiniciar seleccion
                 temas = Object.keys(configuracion.temas);
                 temaActual = 0;
@@ -1571,6 +1764,15 @@
                         ids = items.map(item => 'cfg:' + item.imagen);
                     }
                     localStorage.setItem('orden_' + tema, JSON.stringify(ids));
+                });
+
+                // Importar posiciones del tablero (si el archivo las incluye)
+                const posicionesImportadas = nuevaConfig.posiciones || {};
+                temas.forEach(tema => {
+                    const pos = posicionesImportadas[tema];
+                    if (pos && typeof pos === 'object' && Object.keys(pos).length > 0) {
+                        localStorage.setItem('posiciones_' + tema, JSON.stringify(pos));
+                    }
                 });
 
                 // Persistir items de temas personalizados para que sobrevivan a recarga
