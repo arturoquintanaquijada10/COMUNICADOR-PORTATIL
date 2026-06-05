@@ -27,6 +27,7 @@
              gap: 8px;
              padding: 8px;
              background: #fff;
+             flex-shrink: 0;
          }
 
          #caja-texto {
@@ -96,6 +97,7 @@
             padding: 8px;
             background-color: #90caf9;
             flex-wrap: wrap;
+            flex-shrink: 0;
         }
 
         .btn-tema {
@@ -154,10 +156,14 @@
         }
 
           #contenedor-botones {
-              flex: 1;
+              flex: 1 1 0;
+              min-height: 0;
               position: relative;
-              overflow: auto;
+              overflow-x: hidden;
+              overflow-y: auto;
+              scroll-behavior: smooth;
               background-color: #c8e6c9;
+              -webkit-overflow-scrolling: touch;
           }
 
         .boton-imagen {
@@ -918,7 +924,11 @@
             contenedor.querySelectorAll('.boton-imagen').forEach(el => el.remove());
 
             const colsVisibles = Math.max(1, Math.floor((window.innerWidth - 40) / 110));
-            const filasVisibles = Math.max(1, Math.floor((window.innerHeight - 200) / 110));
+            const barraSupEl = document.getElementById('barra-superior');
+            const temasEl = document.getElementById('botones-temas');
+            const alturaBarras = (barraSupEl ? barraSupEl.offsetHeight : 0) + (temasEl ? temasEl.offsetHeight : 0);
+            const espacioDisponible = Math.max(200, window.innerHeight - alturaBarras);
+            const filasVisibles = Math.max(1, Math.floor(espacioDisponible / 110));
 
             const posGuardadas = obtenerPosiciones(tema);
             if (posGuardadas && Object.keys(posGuardadas).length > 0) {
@@ -928,8 +938,8 @@
             const itemsVisibles = obtenerItemsVisibles(tema);
             const itemsConPos = obtenerItemsConPosicion(tema, itemsVisibles);
             const tam = calcularTamanoTablero(itemsConPos);
-            contenedor.style.minWidth = (tam.cols * 100) + 'px';
-            contenedor.style.minHeight = (tam.filas * 100) + 'px';
+            contenedor.style.width = '100%';
+            contenedor.style.height = espacioDisponible + 'px';
 
             const arrastrable = !configBloqueada;
 
@@ -1075,7 +1085,7 @@
 
             Object.keys(posiciones).forEach(id => {
                 const p = posiciones[id];
-                if (p.col >= 0 && p.col < colsVisibles && p.fila >= 0 && p.fila < filasVisibles) {
+                if (p.col >= 0 && p.col < colsVisibles && p.fila >= 0) {
                     const key = p.col + ',' + p.fila;
                     if (!ocupadas.has(key)) {
                         resultado[id] = p;
