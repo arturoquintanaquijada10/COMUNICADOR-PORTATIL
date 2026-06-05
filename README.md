@@ -52,6 +52,28 @@ open -a "Google Chrome" --args --allow-file-access-from-files index.html
 
 **No funciona abriendo `index.html` directamente** — Chrome bloquea el acceso a archivos locales sin esa bandera.
 
+## Compatibilidad móvil
+
+| Feature | iOS Safari | Android Chrome | Desktop |
+|---|---|---|---|
+| Arrastrar pictogramas (reordenar / mover entre temas) | ✅ Polyfill touch→drag | ✅ Nativo | ✅ Nativo |
+| Tap para agregar palabra | ✅ | ✅ | ✅ |
+| TTS en español | ⚠️ Puede cortar frases largas | ✅ | ✅ |
+| Abrir `file://` directamente | ❌ Necesita servidor HTTP | ❌ Necesita servidor HTTP | Solo con flag Chrome |
+| localStorage persistente | ⚠️ Puede purgarse en modo privado | ✅ | ✅ |
+
+**Drag-and-drop en iOS**: iOS Safari no implementa `dragstart`/`drop` nativamente. La app incluye un polyfill (`instalarPolyfillTouchDrag` en `index.html`) que traduce gestos táctiles a eventos `dragstart`/`dragover`/`drop` sintéticos. **Se activa solo en dispositivos táctiles** (no afecta desktop).
+
+**Para probar en iPhone**:
+
+1. Arrancar un mini-servidor en tu Mac/PC:
+   ```bash
+   python3 -m http.server 8000
+   ```
+2. Averiguar tu IP local: `ifconfig | grep inet` (Mac) o `ipconfig` (Win)
+3. En el iPhone (misma WiFi), abrir Safari y entrar a `http://TU_IP:8000/`
+4. "Compartir → Añadir a pantalla de inicio" para tener icono propio
+
 ## Estructura del proyecto
 
 ```

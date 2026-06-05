@@ -147,6 +147,12 @@
             color: white;
         }
 
+        .btn-tema.drop-tema {
+            border-color: #2196F3;
+            background-color: #e3f2fd;
+            transform: scale(1.1);
+        }
+
           #contenedor-botones {
               flex: 1;
               position: relative;
@@ -209,6 +215,43 @@
 
         #drop-preview.visible {
             display: block;
+        }
+
+        .drag-fantasma {
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+            width: 100px;
+            height: 100px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            border: 2px solid #2196F3;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            opacity: 0.85;
+            transform: translate(-50%, -50%) scale(0.9);
+            transition: transform 0.1s;
+        }
+
+        .drag-fantasma img {
+            width: 60px;
+            height: 60px;
+            object-fit: contain;
+        }
+
+        .drag-fantasma span {
+            font-size: 11px;
+            font-weight: bold;
+            text-transform: uppercase;
+            color: #333;
+            text-align: center;
+            max-width: 90px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         #hint-orden {
@@ -836,6 +879,7 @@
                 const info = configuracion.temas_info ? configuracion.temas_info[tema] : null;
                 const btn = document.createElement('div');
                 btn.className = 'btn-tema' + (indice === temaActual ? ' activo' : '');
+                btn.dataset.tema = tema;
                 if (info && info.imagen) {
                     btn.innerHTML = `
                         <img src="${encodeURI('imagenes/' + info.imagen).replace(/\?/g, '%3F')}" alt="${info.palabra}" onerror="this.style.display='none'">
@@ -908,25 +952,42 @@
 
             if (arrastrable) {
                 instalarDragAndDropHijos();
+                instalarPolyfillTouchDrag();
             }
         }
 
         function obtenerItemsVisibles(tema) {
             const ocultos = JSON.parse(localStorage.getItem('ocultos_' + tema) || '[]');
+            const movidosDe = JSON.parse(localStorage.getItem('movidos_de_' + tema) || '[]');
+            const movidosA = JSON.parse(localStorage.getItem('movidos_a_' + tema) || '[]');
+
             const configItems = (configuracion.temas[tema] || [])
-                .filter(item => !ocultos.includes(item.imagen))
+                .filter(item => !ocultos.includes('cfg:' + item.imagen) && !movidosDe.includes('cfg:' + item.imagen))
                 .map(item => ({
                     ...item,
                     imagen: 'imagenes/' + item.imagen,
                     origen: 'cfg',
                     idItem: 'cfg:' + item.imagen
                 }));
-            const personalizados = obtenerImagenesPersonalizadas(tema).map((item, idx) => ({
-                ...item,
-                origen: 'loc',
-                idItem: 'loc:' + idx + ':' + item.palabra
-            }));
-            return aplicarOrdenGuardado(tema, [...configItems, ...personalizados]);
+            const personalizados = obtenerImagenesPersonalizadas(tema)
+                .map((item, idx) => ({
+                    ...item,
+                    origen: 'loc',
+                    idItem: 'loc:' + idx + ':' + item.palabra
+                }))
+                .filter(item => !movidosDe.includes(item.idItem) && !ocultos.includes(item.idItem));
+
+            const movidos = movidosA
+                .map(item => ({
+                    palabra: item.palabra,
+                    imagen: item.imagen.startsWith('data:') ? item.imagen : 'imagenes/' + item.imagen,
+                    origen: 'mov',
+                    idItem: item.idItem,
+                    temaRaiz: item.temaRaiz
+                }))
+                .filter(item => !ocultos.includes(item.idItem));
+
+            return aplicarOrdenGuardado(tema, [...configItems, ...personalizados, ...movidos]);
         }
 
         function obtenerOrdenGuardado(tema) {
@@ -1101,8 +1162,85 @@
             cargarBotones();
         }
 
+        function limpiarItemDeTodosLosTemas(idItem) {
+            temas.forEach(tema => {
+                const movidosDe = JSON.parse(localStorage.getItem('movidos_de_' + tema) || '[]');
+                const idxDe = movidosDe.indexOf(idItem);
+                if (idxDe >= 0) {
+                    movidosDe.splice(idxDe, 1);
+                    localStorage.setItem('movidos_de_' + tema, JSON.stringify(movidosDe));
+                }
+
+                const movidosA = JSON.parse(localStorage.getItem('movidos_a_' + tema) || '[]');
+                const idxA = movidosA.findIndex(m => m.idItem === idItem);
+                if (idxA >= 0) {
+                    movidosA.splice(idxA, 1);
+                    localStorage.setItem('movidos_a_' + tema, JSON.stringify(movidosA));
+                }
+
+                const posiciones = JSON.parse(localStorage.getItem('posiciones_' + tema) || '{}');
+                if (posiciones[idItem]) {
+                    delete posiciones[idItem];
+                    localStorage.setItem('posiciones_' + tema, JSON.stringify(posiciones));
+                }
+            });
+        }
+
+        function moverPictoAOtroTema(id, temaOrigen, temaDestino) {
+            if (temaOrigen === temaDestino) return;
+
+            const itemsOrigen = obtenerItemsVisibles(temaOrigen);
+            const item = itemsOrigen.find(it => it.idItem === id);
+            if (!item) return;
+
+            const temaRaiz = item.origen === 'mov' ? item.temaRaiz : temaOrigen;
+
+            temas.forEach(tema => {
+                if (tema === temaRaiz) return;
+
+                const movidosDe = JSON.parse(localStorage.getItem('movidos_de_' + tema) || '[]');
+                const idxDe = movidosDe.indexOf(id);
+                if (idxDe >= 0) {
+                    movidosDe.splice(idxDe, 1);
+                    localStorage.setItem('movidos_de_' + tema, JSON.stringify(movidosDe));
+                }
+
+                const movidosA = JSON.parse(localStorage.getItem('movidos_a_' + tema) || '[]');
+                const idxA = movidosA.findIndex(m => m.idItem === id);
+                if (idxA >= 0) {
+                    movidosA.splice(idxA, 1);
+                    localStorage.setItem('movidos_a_' + tema, JSON.stringify(movidosA));
+                }
+
+                const posiciones = JSON.parse(localStorage.getItem('posiciones_' + tema) || '{}');
+                if (posiciones[id]) {
+                    delete posiciones[id];
+                    localStorage.setItem('posiciones_' + tema, JSON.stringify(posiciones));
+                }
+            });
+
+            const movidosDeOrigen = JSON.parse(localStorage.getItem('movidos_de_' + temaOrigen) || '[]');
+            if (!movidosDeOrigen.includes(id)) {
+                movidosDeOrigen.push(id);
+                localStorage.setItem('movidos_de_' + temaOrigen, JSON.stringify(movidosDeOrigen));
+            }
+
+            const movidosA = JSON.parse(localStorage.getItem('movidos_a_' + temaDestino) || '[]');
+            const imagenParaGuardar = item.imagen.startsWith('data:') ? item.imagen : item.imagen.replace(/^imagenes\//, '');
+            movidosA.push({
+                palabra: item.palabra,
+                imagen: imagenParaGuardar,
+                idItem: id,
+                temaRaiz: temaRaiz
+            });
+            localStorage.setItem('movidos_a_' + temaDestino, JSON.stringify(movidosA));
+
+            cargarBotones();
+        }
+
         function instalarDragAndDropContenedor() {
             const contenedor = document.getElementById('contenedor-botones');
+            const barraTemas = document.getElementById('botones-temas');
             const preview = document.createElement('div');
             preview.id = 'drop-preview';
             contenedor.appendChild(preview);
@@ -1143,6 +1281,37 @@
 
                 moverPicto(id, col, fila);
             });
+
+            barraTemas.addEventListener('dragover', e => {
+                const btnTema = e.target.closest('.btn-tema');
+                if (btnTema && idArrastrando) {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                    if (!btnTema.classList.contains('drop-tema')) {
+                        barraTemas.querySelectorAll('.btn-tema.drop-tema').forEach(b => b.classList.remove('drop-tema'));
+                        btnTema.classList.add('drop-tema');
+                    }
+                }
+            });
+
+            barraTemas.addEventListener('dragleave', e => {
+                const btnTema = e.target.closest('.btn-tema');
+                if (btnTema && (!e.relatedTarget || !btnTema.contains(e.relatedTarget))) {
+                    btnTema.classList.remove('drop-tema');
+                }
+            });
+
+            barraTemas.addEventListener('drop', e => {
+                e.preventDefault();
+                const btnTema = e.target.closest('.btn-tema');
+                barraTemas.querySelectorAll('.btn-tema.drop-tema').forEach(b => b.classList.remove('drop-tema'));
+                if (!btnTema) return;
+                const temaDestino = btnTema.dataset.tema;
+                const id = e.dataTransfer.getData('text/plain');
+                if (id && temaDestino) {
+                    moverPictoAOtroTema(id, temas[temaActual], temaDestino);
+                }
+            });
         }
 
         function instalarDragAndDropHijos() {
@@ -1163,6 +1332,164 @@
                     const preview = document.getElementById('drop-preview');
                     if (preview) preview.classList.remove('visible');
                 });
+            });
+        }
+
+        function esDispositivoTactil() {
+            return ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+        }
+
+        function instalarPolyfillTouchDrag() {
+            if (!esDispositivoTactil()) return;
+
+            const TAP_MAX_MOVIMIENTO = 10;
+            const TAP_MAX_DURACION = 300;
+
+            let estado = null;
+
+            function crearFantasma(boton) {
+                const fantasma = document.createElement('div');
+                fantasma.className = 'drag-fantasma';
+                const img = boton.querySelector('img');
+                const span = boton.querySelector('span');
+                fantasma.innerHTML = `
+                    ${img ? `<img src="${img.src}" alt="">` : ''}
+                    ${span ? `<span>${span.textContent}</span>` : ''}
+                `;
+                document.body.appendChild(fantasma);
+                return fantasma;
+            }
+
+            function crearDataTransferFalso() {
+                const data = {};
+                return {
+                    _data: data,
+                    setData(tipo, valor) { data[tipo] = valor; },
+                    getData(tipo) { return data[tipo] || ''; },
+                    clearData() { Object.keys(data).forEach(k => delete data[k]); },
+                    dropEffect: 'move',
+                    effectAllowed: 'move',
+                    types: Object.keys(data)
+                };
+            }
+
+            function encontrarDropTarget(x, y) {
+                const el = document.elementFromPoint(x, y);
+                if (!el) return null;
+                return el.closest('.boton-imagen.arrastrable, .btn-tema, #contenedor-botones, #botones-temas');
+            }
+
+            function onTouchStart(e) {
+                if (e.touches.length !== 1) return;
+                const touch = e.touches[0];
+                const boton = e.currentTarget;
+
+                estado = {
+                    botonOrigen: boton,
+                    startX: touch.clientX,
+                    startY: touch.clientY,
+                    startTime: Date.now(),
+                    idItem: boton.dataset.id,
+                    fantasma: null,
+                    dataTransfer: null,
+                    lastTarget: null,
+                    iniciado: false
+                };
+            }
+
+            function onTouchMove(e) {
+                if (!estado) return;
+                e.preventDefault();
+
+                const touch = e.touches[0];
+                const dx = touch.clientX - estado.startX;
+                const dy = touch.clientY - estado.startY;
+                const distancia = Math.sqrt(dx * dx + dy * dy);
+
+                if (!estado.iniciado && distancia < TAP_MAX_MOVIMIENTO) return;
+
+                if (!estado.iniciado) {
+                    estado.iniciado = true;
+                    estado.dataTransfer = crearDataTransferFalso();
+                    estado.dataTransfer.setData('text/plain', estado.idItem);
+                    estado.fantasma = crearFantasma(estado.botonOrigen);
+
+                    idArrastrando = estado.idItem;
+                    estado.botonOrigen.classList.add('arrastrando');
+
+                    const dragStartEvent = new Event('dragstart', { bubbles: true, cancelable: true });
+                    Object.defineProperty(dragStartEvent, 'dataTransfer', { value: estado.dataTransfer });
+                    Object.defineProperty(dragStartEvent, 'clientX', { value: touch.clientX });
+                    Object.defineProperty(dragStartEvent, 'clientY', { value: touch.clientY });
+                    estado.botonOrigen.dispatchEvent(dragStartEvent);
+                }
+
+                estado.fantasma.style.left = touch.clientX + 'px';
+                estado.fantasma.style.top = touch.clientY + 'px';
+
+                const target = encontrarDropTarget(touch.clientX, touch.clientY);
+
+                if (target !== estado.lastTarget) {
+                    if (estado.lastTarget) {
+                        const leaveEvent = new Event('dragleave', { bubbles: true, cancelable: true });
+                        Object.defineProperty(leaveEvent, 'dataTransfer', { value: estado.dataTransfer });
+                        Object.defineProperty(leaveEvent, 'clientX', { value: touch.clientX });
+                        Object.defineProperty(leaveEvent, 'clientY', { value: touch.clientY });
+                        estado.lastTarget.dispatchEvent(leaveEvent);
+                    }
+                    estado.lastTarget = target;
+                    if (target) {
+                        const overEvent = new Event('dragover', { bubbles: true, cancelable: true });
+                        Object.defineProperty(overEvent, 'dataTransfer', { value: estado.dataTransfer });
+                        Object.defineProperty(overEvent, 'clientX', { value: touch.clientX });
+                        Object.defineProperty(overEvent, 'clientY', { value: touch.clientY });
+                        target.dispatchEvent(overEvent);
+                    }
+                }
+            }
+
+            function finalizarDrag(e, cancelado) {
+                if (!estado) return;
+
+                if (!estado.iniciado) {
+                    estado = null;
+                    return;
+                }
+
+                if (estado.fantasma) estado.fantasma.remove();
+
+                if (estado.botonOrigen) estado.botonOrigen.classList.remove('arrastrando');
+
+                const dragEndEvent = new Event('dragend', { bubbles: true, cancelable: true });
+                if (estado.botonOrigen) estado.botonOrigen.dispatchEvent(dragEndEvent);
+
+                if (!cancelado && estado.lastTarget) {
+                    const touch = (e.changedTouches && e.changedTouches[0]) || { clientX: 0, clientY: 0 };
+                    const dropEvent = new Event('drop', { bubbles: true, cancelable: true });
+                    Object.defineProperty(dropEvent, 'dataTransfer', { value: estado.dataTransfer });
+                    Object.defineProperty(dropEvent, 'clientX', { value: touch.clientX });
+                    Object.defineProperty(dropEvent, 'clientY', { value: touch.clientY });
+                    estado.lastTarget.dispatchEvent(dropEvent);
+                }
+
+                idArrastrando = null;
+                estado = null;
+            }
+
+            function onTouchEnd(e) {
+                finalizarDrag(e, false);
+            }
+
+            function onTouchCancel(e) {
+                finalizarDrag(e, true);
+            }
+
+            const botones = document.querySelectorAll('#contenedor-botones .boton-imagen.arrastrable');
+            botones.forEach(boton => {
+                boton.addEventListener('touchstart', onTouchStart, { passive: true });
+                boton.addEventListener('touchmove', onTouchMove, { passive: false });
+                boton.addEventListener('touchend', onTouchEnd, { passive: true });
+                boton.addEventListener('touchcancel', onTouchCancel, { passive: true });
             });
         }
 
@@ -1403,6 +1730,8 @@
                   localStorage.removeItem('imagenes_' + tema);
                   localStorage.removeItem('orden_' + tema);
                   localStorage.removeItem('posiciones_' + tema);
+                  localStorage.removeItem('movidos_de_' + tema);
+                  localStorage.removeItem('movidos_a_' + tema);
                   delete configuracion.temas[tema];
                   delete configuracion.temas_info[tema];
                   const infoCustom = JSON.parse(localStorage.getItem('temas_info_custom') || '{}');
@@ -1513,10 +1842,9 @@
             if (!lista) return;
             const ocultos = JSON.parse(localStorage.getItem('ocultos_' + tema) || '[]');
 
-            const configItems = configuracion.temas[tema] || [];
-            const customItems = obtenerImagenesPersonalizadas(tema);
+            const items = obtenerItemsVisibles(tema);
 
-            if (configItems.length === 0 && customItems.length === 0) {
+            if (items.length === 0) {
                 lista.innerHTML = '<p style="color:#999;text-align:center;padding:10px;font-size:13px;">Sin pictogramas en este tema</p>';
                 return;
             }
@@ -1524,31 +1852,33 @@
             let html = '';
             let ocultosHtml = '';
 
-            configItems.forEach(item => {
-                const oculto = ocultos.includes(item.imagen);
-                const src = encodeURI('imagenes/' + item.imagen).replace(/\?/g, '%3F');
+            items.forEach(item => {
+                const oculto = ocultos.includes(item.idItem);
+                const src = encodeURI(item.imagen).replace(/\?/g, '%3F');
+                const idItemSafe = item.idItem.replace(/"/g, '&quot;');
+
+                let badge = 'config';
+                let acciones = '';
+                if (item.origen === 'loc') {
+                    badge = 'personal';
+                    acciones = `<span class="picto-del" data-tema="${tema}" data-id="${idItemSafe}" data-origen="loc">BORRAR</span>`;
+                } else if (item.origen === 'mov') {
+                    badge = 'movido';
+                    acciones = `<span class="picto-del" data-tema="${tema}" data-id="${idItemSafe}" data-origen="mov">DEVOLVER</span>`;
+                } else {
+                    acciones = `<span class="picto-toggle" data-tema="${tema}" data-id="${idItemSafe}">${oculto ? 'RESTAURAR' : 'OCULTAR'}</span>`;
+                }
+
                 const row = `
                     <div class="picto-item${oculto ? ' oculto' : ''}">
                         <img src="${src}" onerror="this.style.display='none'" class="picto-img">
                         <span class="picto-label">${item.palabra}</span>
-                        <span class="picto-badge">config</span>
-                        <span class="picto-toggle" data-tema="${tema}" data-imagen="${item.imagen.replace(/"/g, '&quot;')}">${oculto ? 'RESTAURAR' : 'OCULTAR'}</span>
+                        <span class="picto-badge">${badge}</span>
+                        ${acciones}
                     </div>
                 `;
                 if (oculto) ocultosHtml += row;
                 else html += row;
-            });
-
-            customItems.forEach((item, idx) => {
-                const src = encodeURI(item.imagen).replace(/\?/g, '%3F');
-                html += `
-                    <div class="picto-item custom">
-                        <img src="${src}" onerror="this.style.display='none'" class="picto-img">
-                        <span class="picto-label">${item.palabra}</span>
-                        <span class="picto-badge">personal</span>
-                        <span class="picto-del" data-tema="${tema}" data-idx="${idx}">BORRAR</span>
-                    </div>
-                `;
             });
 
             if (ocultosHtml) {
@@ -1558,43 +1888,60 @@
             lista.innerHTML = html;
 
             lista.querySelectorAll('.picto-toggle').forEach(el => {
-                el.onclick = () => toggleOcultar(el.dataset.tema, el.dataset.imagen);
+                el.onclick = () => toggleOcultar(el.dataset.tema, el.dataset.id);
             });
             lista.querySelectorAll('.picto-del').forEach(el => {
-                el.onclick = () => borrarPersonalizado(el.dataset.tema, parseInt(el.dataset.idx));
+                el.onclick = () => borrarPersonalizado(el.dataset.tema, el.dataset.id, el.dataset.origen);
             });
 
             const info = document.getElementById('info-gestion-config');
             if (info) {
-                const total = configItems.length + customItems.length;
+                const total = items.length;
                 info.textContent = 'Tema: ' + tema.toUpperCase() + ' | Total: ' + total + ' | Visibles: ' + (total - ocultos.length) + ' | Ocultas: ' + ocultos.length;
             }
         }
 
-        function toggleOcultar(tema, imagen) {
+        function toggleOcultar(tema, idItem) {
             const clave = 'ocultos_' + tema;
             const ocultos = JSON.parse(localStorage.getItem(clave) || '[]');
-            const idx = ocultos.indexOf(imagen);
+            const idx = ocultos.indexOf(idItem);
             if (idx >= 0) {
                 ocultos.splice(idx, 1);
             } else {
-                ocultos.push(imagen);
+                ocultos.push(idItem);
             }
             localStorage.setItem(clave, JSON.stringify(ocultos));
             listarPictogramasTema();
             cargarBotones();
         }
 
-        function borrarPersonalizado(tema, idx) {
-            const personalizados = obtenerImagenesPersonalizadas(tema);
-            if (!personalizados[idx]) return;
-            if (confirm('Borrar imagen "' + personalizados[idx].palabra + '"?')) {
-                personalizados.splice(idx, 1);
-                localStorage.setItem('imagenes_' + tema, JSON.stringify(personalizados));
-                listarPictogramasTema();
-                actualizarSelectorImagenesBorrar();
-                cargarBotones();
-                leerPalabra('IMAGEN BORRADA');
+        function borrarPersonalizado(tema, idItem, origen) {
+            if (origen === 'loc') {
+                const idx = parseInt(idItem.split(':')[1]);
+                const personalizados = obtenerImagenesPersonalizadas(tema);
+                if (!personalizados[idx]) return;
+                if (confirm('Borrar imagen "' + personalizados[idx].palabra + '"?')) {
+                    personalizados.splice(idx, 1);
+                    localStorage.setItem('imagenes_' + tema, JSON.stringify(personalizados));
+                    listarPictogramasTema();
+                    actualizarSelectorImagenesBorrar();
+                    cargarBotones();
+                    leerPalabra('IMAGEN BORRADA');
+                }
+            } else if (origen === 'mov') {
+                const movidosA = JSON.parse(localStorage.getItem('movidos_a_' + tema) || '[]');
+                const idxMov = movidosA.findIndex(m => m.idItem === idItem);
+                if (idxMov < 0) return;
+                const item = movidosA[idxMov];
+                const msg = 'Devolver "' + item.palabra + '" al tema "' + item.temaRaiz.toUpperCase() + '"?';
+                if (confirm(msg)) {
+                    limpiarItemDeTodosLosTemas(idItem);
+                    listarPictogramasTema();
+                    cargarBotones();
+                    leerPalabra('DEVUELTO');
+                }
+            } else {
+                alert('No se puede borrar un pictograma de la configuración base. Puedes OCULTARLO en su lugar.');
             }
         }
 
@@ -1739,6 +2086,12 @@
 
                 // Limpiar posiciones guardadas del estado anterior
                 temas.forEach(tema => localStorage.removeItem('posiciones_' + tema));
+
+                // Limpiar movidos entre temas del estado anterior
+                temas.forEach(tema => {
+                    localStorage.removeItem('movidos_de_' + tema);
+                    localStorage.removeItem('movidos_a_' + tema);
+                });
 
                 // Actualizar temas y reiniciar seleccion
                 temas = Object.keys(configuracion.temas);
