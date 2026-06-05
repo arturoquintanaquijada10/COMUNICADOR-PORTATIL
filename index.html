@@ -888,7 +888,7 @@
                 btn.dataset.tema = tema;
                 if (info && info.imagen) {
                     btn.innerHTML = `
-                        <img src="${encodeURI('imagenes/' + info.imagen).replace(/\?/g, '%3F')}" alt="${info.palabra}" onerror="this.style.display='none'">
+                        <img src="${encodeURI(('imagenes/' + info.imagen).normalize('NFC')).replace(/\?/g, '%3F')}" alt="${info.palabra}" onerror="this.style.display='none'">
                         <span>${info.palabra}</span>
                     `;
                 } else {
@@ -951,7 +951,7 @@
                 boton.style.left = (item.col * 100) + 'px';
                 boton.style.top = (item.fila * 100) + 'px';
                 boton.innerHTML = `
-                    <img src="${encodeURI(item.imagen).replace(/\?/g, '%3F')}" alt="${item.palabra}" onerror="this.parentElement.style.display='none'">
+                    <img src="${encodeURI(item.imagen.normalize('NFC')).replace(/\?/g, '%3F')}" alt="${item.palabra}" onerror="this.style.display='none'">
                     <span>${item.palabra}</span>
                 `;
                 if (!arrastrable) {
@@ -1669,7 +1669,7 @@
             const disponibles = obtenerImagenesDisponibles();
             contenedor.innerHTML = '<div class="img-option seleccionada" data-imagen=""><img src="borrar.png" alt="" style="opacity:0.3;"><span>SIN IMAGEN</span></div>';
             disponibles.forEach(f => {
-                const src = encodeURI('imagenes/' + f).replace(/\?/g, '%3F');
+                const src = encodeURI(('imagenes/' + f).normalize('NFC')).replace(/\?/g, '%3F');
                 const div = document.createElement('div');
                 div.className = 'img-option';
                 div.dataset.imagen = f;
@@ -1864,7 +1864,7 @@
 
             items.forEach(item => {
                 const oculto = ocultos.includes(item.idItem);
-                const src = encodeURI(item.imagen).replace(/\?/g, '%3F');
+                const src = encodeURI(item.imagen.normalize('NFC')).replace(/\?/g, '%3F');
                 const idItemSafe = item.idItem.replace(/"/g, '&quot;');
 
                 let badge = 'config';
