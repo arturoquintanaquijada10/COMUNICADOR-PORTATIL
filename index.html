@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="format-detection" content="telephone=no">
-    <title>Comunicador 1.0.1</title>
+    <title>Comunicador 1.0.2</title>
 
     <style>
         * {
@@ -24,27 +26,27 @@
             overflow: hidden;
         }
 
-         #barra-superior {
-             display: flex;
-             align-items: center;
-             gap: 8px;
-             padding: 8px;
-             background: #fff;
-             flex-shrink: 0;
-         }
+        #barra-superior {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px;
+            background: #fff;
+            flex-shrink: 0;
+        }
 
-         #caja-texto {
-             flex: 1;
-             height: 100px;
-             font-size: 24px;
-             padding: 12px;
-             border: 3px solid #333;
-             background-color: #c8e6c9;
-             resize: none;
-             text-transform: uppercase;
-         }
+        #caja-texto {
+            flex: 1;
+            height: 100px;
+            font-size: 24px;
+            padding: 12px;
+            border: 3px solid #333;
+            background-color: #c8e6c9;
+            resize: none;
+            text-transform: uppercase;
+        }
 
-.btn-accion {
+        .btn-accion {
             padding: 8px 20px;
             font-size: 18px;
             cursor: pointer;
@@ -158,16 +160,16 @@
             transform: scale(1.1);
         }
 
-          #contenedor-botones {
-              flex: 1 1 0;
-              min-height: 0;
-              position: relative;
-              overflow-x: hidden;
-              overflow-y: auto;
-              scroll-behavior: smooth;
-              background-color: #c8e6c9;
-              -webkit-overflow-scrolling: touch;
-          }
+        #contenedor-botones {
+            flex: 1 1 0;
+            min-height: 0;
+            position: relative;
+            overflow-x: hidden;
+            overflow-y: auto;
+            scroll-behavior: smooth;
+            background-color: #c8e6c9;
+            -webkit-overflow-scrolling: touch;
+        }
 
         .boton-imagen {
             position: absolute;
@@ -239,7 +241,7 @@
             background: white;
             border: 2px solid #2196F3;
             border-radius: 10px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
             opacity: 0.85;
             transform: translate(-50%, -50%) scale(0.9);
             transition: transform 0.1s;
@@ -329,8 +331,14 @@
             font-size: 24px;
             transition: background 0.2s;
         }
-        #btn-bloqueo:hover { background: #e0e0e0; }
-        #btn-bloqueo.desbloqueado { background: #c8e6c9; }
+
+        #btn-bloqueo:hover {
+            background: #e0e0e0;
+        }
+
+        #btn-bloqueo.desbloqueado {
+            background: #c8e6c9;
+        }
 
         .btn-inferior {
             padding: 10px 14px;
@@ -343,14 +351,37 @@
             white-space: nowrap;
         }
 
-        .btn-inferior.temas { background-color: #4CAF50; }
-        .btn-inferior.temas:hover { background-color: #45a049; }
-        .btn-inferior.palabras { background-color: #2196F3; }
-        .btn-inferior.palabras:hover { background-color: #1976D2; }
-        .btn-inferior.importar { background-color: #FF9800; }
-        .btn-inferior.importar:hover { background-color: #e68a00; }
-        .btn-inferior.config { background-color: #9C27B0; }
-        .btn-inferior.config:hover { background-color: #7B1FA2; }
+        .btn-inferior.temas {
+            background-color: #4CAF50;
+        }
+
+        .btn-inferior.temas:hover {
+            background-color: #45a049;
+        }
+
+        .btn-inferior.palabras {
+            background-color: #2196F3;
+        }
+
+        .btn-inferior.palabras:hover {
+            background-color: #1976D2;
+        }
+
+        .btn-inferior.importar {
+            background-color: #FF9800;
+        }
+
+        .btn-inferior.importar:hover {
+            background-color: #e68a00;
+        }
+
+        .btn-inferior.config {
+            background-color: #9C27B0;
+        }
+
+        .btn-inferior.config:hover {
+            background-color: #7B1FA2;
+        }
 
         .img-option {
             display: flex;
@@ -361,8 +392,15 @@
             cursor: pointer;
             transition: background 0.15s;
         }
-        .img-option:hover { background: #f0f0f0; }
-        .img-option.seleccionada { background: #c8e6c9; }
+
+        .img-option:hover {
+            background: #f0f0f0;
+        }
+
+        .img-option.seleccionada {
+            background: #c8e6c9;
+        }
+
         .img-option img {
             width: 45px;
             height: 45px;
@@ -370,6 +408,7 @@
             border: 1px solid #ccc;
             border-radius: 4px;
         }
+
         .img-option span {
             font-size: 13px;
             font-weight: bold;
@@ -387,7 +426,10 @@
             white-space: nowrap;
             flex-shrink: 0;
         }
-        .btn-borrar-tema:hover { background-color: #c62828; }
+
+        .btn-borrar-tema:hover {
+            background-color: #c62828;
+        }
 
         .modal {
             display: none;
@@ -396,7 +438,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0,0,0,0.5);
+            background-color: rgba(0, 0, 0, 0.5);
             z-index: 1000;
             justify-content: center;
             align-items: center;
@@ -495,27 +537,27 @@
             border-radius: 8px;
         }
 
-         #div-nuevo-tema input {
-             width: 100%;
-             padding: 8px;
-             font-size: 14px;
-             margin-bottom: 10px;
-             border: 2px solid #333;
-             border-radius: 8px;
-         }
+        #div-nuevo-tema input {
+            width: 100%;
+            padding: 8px;
+            font-size: 14px;
+            margin-bottom: 10px;
+            border: 2px solid #333;
+            border-radius: 8px;
+        }
 
-         #select-tema,
-         #select-tema-config,
-         #select-tema-palabras {
-              padding: 10px;
-              font-size: 14px;
-              border: 2px solid #333;
-              border-radius: 8px;
-              height: 44px;
-              flex: 1;
-          }
+        #select-tema,
+        #select-tema-config,
+        #select-tema-palabras {
+            padding: 10px;
+            font-size: 14px;
+            border: 2px solid #333;
+            border-radius: 8px;
+            height: 44px;
+            flex: 1;
+        }
 
-         #info-gestion {
+        #info-gestion {
             text-align: center;
         }
 
@@ -688,6 +730,7 @@
         }
     </style>
 </head>
+
 <body>
     <div id="barra-superior">
         <button style="background:none; border:none; padding:0; cursor:pointer; flex-shrink:0;" onclick="leerTexto()">
@@ -696,7 +739,7 @@
         <textarea id="caja-texto" placeholder="Escribe aquí..."></textarea>
         <button class="btn-accion borrar" onclick="borrarTexto()" style="flex-shrink:0;">BORRAR</button>
     </div>
-    
+
     <div id="botones-temas" class="botones-temas"></div>
 
     <div id="hint-orden">✋ MODO EDICIÓN — ARRASTRA LOS PICTOGRAMAS PARA REORDENAR</div>
@@ -722,10 +765,14 @@
             <div style="margin-top: 10px;">
                 <button class="btn-nuevo" onclick="mostrarNuevoTema()">NUEVO TEMA</button>
             </div>
-            <div id="div-nuevo-tema" style="display: none; margin-top: 10px; border-top: 2px solid #ddd; padding-top: 10px;">
-                <input type="text" id="input-nuevo-tema" placeholder="Nombre del nuevo tema..." style="width:100%;padding:8px;font-size:14px;margin-bottom:8px;border:2px solid #333;border-radius:8px;">
+            <div id="div-nuevo-tema"
+                style="display: none; margin-top: 10px; border-top: 2px solid #ddd; padding-top: 10px;">
+                <input type="text" id="input-nuevo-tema" placeholder="Nombre del nuevo tema..."
+                    style="width:100%;padding:8px;font-size:14px;margin-bottom:8px;border:2px solid #333;border-radius:8px;">
                 <label>SELECCIONA UNA IMAGEN (OPCIONAL):</label>
-                <div id="lista-imagenes-tema" style="max-height:250px;overflow-y:auto;border:1px solid #ddd;border-radius:8px;padding:4px;margin-bottom:8px;"></div>
+                <div id="lista-imagenes-tema"
+                    style="max-height:250px;overflow-y:auto;border:1px solid #ddd;border-radius:8px;padding:4px;margin-bottom:8px;">
+                </div>
                 <div style="display: flex; gap: 10px;">
                     <button class="btn-aceptar" onclick="crearNuevoTema()" style="flex:1;">CREAR</button>
                     <button class="btn-cancelar" onclick="ocultarNuevoTema()" style="flex:1;">CANCELAR</button>
@@ -747,7 +794,9 @@
             <div style="display: flex; gap: 10px; align-items: center;">
                 <input type="text" id="input-palabra" placeholder="Escribe la palabra...">
                 <select id="select-imagen-borrar" style="display: none;"></select>
-                <button id="btn-borrar-imagen" style="display: none; background:none; border:none; padding:0; cursor:pointer;" onclick="borrarImagenSeleccionada()">
+                <button id="btn-borrar-imagen"
+                    style="display: none; background:none; border:none; padding:0; cursor:pointer;"
+                    onclick="borrarImagenSeleccionada()">
                     <img src="borrar.png" alt="Borrar" style="height:35px;">
                 </button>
             </div>
@@ -769,7 +818,8 @@
             <label>CONFIGURACIÓN:</label>
             <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                 <input type="file" id="input-importar" accept=".js" style="display: none;" onchange="importarConfig()">
-                <button class="btn-importar" onclick="document.getElementById('input-importar').click()">IMPORTAR CONF</button>
+                <button class="btn-importar" onclick="document.getElementById('input-importar').click()">IMPORTAR
+                    CONF</button>
                 <button class="btn-exportar" onclick="exportarConfig()">EXPORTAR CONF</button>
             </div>
             <p id="info-importar" style="margin-top: 8px; font-size: 12px; color: #666;"></p>
@@ -788,12 +838,16 @@
             </div>
             <div style="margin-top:10px;">
                 <label>PICTOGRAMAS DEL TEMA:</label>
-                <div id="lista-pictogramas" style="max-height:300px;overflow-y:auto;margin-bottom:10px;border:1px solid #ddd;border-radius:8px;padding:4px;"></div>
+                <div id="lista-pictogramas"
+                    style="max-height:300px;overflow-y:auto;margin-bottom:10px;border:1px solid #ddd;border-radius:8px;padding:4px;">
+                </div>
             </div>
             <div style="margin-top:10px;border-top:2px solid #ddd;padding-top:10px;">
                 <label>AÑADIR DESDE IMAGEN EXISTENTE:</label>
-                <select id="select-imagen-existente" style="width:100%;padding:8px;font-size:14px;margin-bottom:8px;border:2px solid #333;border-radius:8px;"></select>
-                <input type="text" id="input-palabra-existente" placeholder="Palabra..." style="width:100%;padding:8px;font-size:14px;margin-bottom:8px;border:2px solid #333;border-radius:8px;text-transform:uppercase;">
+                <select id="select-imagen-existente"
+                    style="width:100%;padding:8px;font-size:14px;margin-bottom:8px;border:2px solid #333;border-radius:8px;"></select>
+                <input type="text" id="input-palabra-existente" placeholder="Palabra..."
+                    style="width:100%;padding:8px;font-size:14px;margin-bottom:8px;border:2px solid #333;border-radius:8px;text-transform:uppercase;">
                 <div style="display:flex;gap:10px;margin-top:8px;">
                     <button class="btn-aceptar" onclick="anadirDesdeExistente()" style="flex:1;">AÑADIR</button>
                     <button class="btn-cancelar" onclick="cerrarModalConfig()" style="flex:1;">CERRAR</button>
@@ -820,7 +874,7 @@
                 var parts = String(path || '').split('/');
                 for (var i = 0; i < parts.length; i++) {
                     try { parts[i] = encodeURIComponent(decodeURIComponent(parts[i])); }
-                    catch(e) { parts[i] = encodeURIComponent(parts[i]); }
+                    catch (e) { parts[i] = encodeURIComponent(parts[i]); }
                 }
                 return parts.join('/');
             }
@@ -828,14 +882,14 @@
                 var list = [];
                 if (!src || src.indexOf('data:') === 0) return [src];
                 addUnique(list, src);
-                try { addUnique(list, encodeURI(src)); } catch(e) {}
+                try { addUnique(list, encodeURI(src)); } catch (e) { }
                 if (String.prototype.normalize) {
                     try {
                         addUnique(list, src.normalize('NFC'));
                         addUnique(list, encodeURI(src.normalize('NFC')));
                         addUnique(list, src.normalize('NFD'));
                         addUnique(list, encodeURI(src.normalize('NFD')));
-                    } catch(e) {}
+                    } catch (e) { }
                 }
                 addUnique(list, encodeSegments(src));
                 return list;
@@ -859,7 +913,7 @@
             }, true);
             function setAppHeight() {
                 var h = window.innerHeight || document.documentElement.clientHeight || 600;
-                try { document.documentElement.style.setProperty('--app-height', h + 'px'); } catch(e) {}
+                try { document.documentElement.style.setProperty('--app-height', h + 'px'); } catch (e) { }
             }
             setAppHeight();
             addEvent(window, 'resize', setAppHeight);
@@ -871,9 +925,9 @@
         // Drag & drop original preservado: mover pictogramas dentro del tablero y entre temas.
         // Guardar los temas originales de config.js
         const temasOriginalesConfig = Object.keys(configuracion.temas);
-        
+
         let temas = Object.keys(configuracion.temas);
-        
+
         // Recuperar temas personalizados guardados en localStorage
         const temasPersonalizados = JSON.parse(localStorage.getItem('temas_custom') || '[]');
         temasPersonalizados.forEach(tema => {
@@ -884,7 +938,7 @@
                 temas.push(tema);
             }
         });
-        
+
         // Recuperar temas_info de temas personalizados
         const temasInfoCustom = JSON.parse(localStorage.getItem('temas_info_custom') || '{}');
         Object.keys(temasInfoCustom).forEach(tema => {
@@ -1073,7 +1127,7 @@
                 if (!raw) return null;
                 const arr = JSON.parse(raw);
                 return Array.isArray(arr) ? arr : null;
-            } catch(e) { return null; }
+            } catch (e) { return null; }
         }
 
         function aplicarOrdenGuardado(tema, items) {
@@ -1207,7 +1261,7 @@
                 if (!raw) return null;
                 const obj = JSON.parse(raw);
                 return (obj && typeof obj === 'object' && !Array.isArray(obj)) ? obj : null;
-            } catch(e) { return null; }
+            } catch (e) { return null; }
         }
 
         function guardarPosiciones(tema, posiciones) {
@@ -1607,7 +1661,7 @@
             document.getElementById('caja-texto').value = '';
         }
 
-        document.getElementById('caja-texto').addEventListener('input', function(e) {
+        document.getElementById('caja-texto').addEventListener('input', function (e) {
             this.value = this.value.toUpperCase();
         });
 
@@ -1670,18 +1724,34 @@
             document.getElementById('modal-importar').classList.remove('mostrar');
         }
 
+
+        function normalizarPassword(valor) {
+            valor = String(valor || '').trim().toLowerCase();
+
+            // Quitar acentos si el navegador soporta normalize()
+            if (valor.normalize) {
+                valor = valor.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            }
+
+            return valor;
+        }
+
         function toggleConfig() {
             const botones = document.getElementById('botones-inferiores');
             const btn = document.getElementById('btn-bloqueo');
             const hint = document.getElementById('hint-orden');
             if (configBloqueada) {
+
                 const clave = configuracion.clave_acceso || 'sonrie';
                 const respuesta = prompt('Introduce la contraseña:');
                 if (respuesta === null) return;
-                if (respuesta !== clave) {
+
+
+                if (normalizarPassword(respuesta) !== normalizarPassword(clave)) {
                     alert('Contraseña incorrecta');
                     return;
                 }
+
                 configBloqueada = false;
                 botones.classList.add('visible');
                 btn.classList.add('desbloqueado');
@@ -1702,7 +1772,7 @@
             const archivo = document.getElementById('input-archivo').files[0];
             if (archivo) {
                 const reader = new FileReader();
-                reader.onload = function(e) {
+                reader.onload = function (e) {
                     imagenBase64 = e.target.result;
                     document.getElementById('vista-previa').src = imagenBase64;
                     document.getElementById('vista-previa').style.display = 'block';
@@ -1714,7 +1784,7 @@
         function guardarImagen() {
             const tema = document.getElementById('select-tema-palabras').value;
             const palabra = document.getElementById('input-palabra').value.trim().toUpperCase();
-            
+
             if (!palabra || !imagenBase64) {
                 alert('Completa todos los campos');
                 return;
@@ -1741,7 +1811,7 @@
                 div.className = 'img-option';
                 div.dataset.imagen = f;
                 div.innerHTML = `<img src="${src}" onerror="this.style.display='none'"><span>${f.replace(/\.png$/i, '')}</span>`;
-                div.onclick = function() {
+                div.onclick = function () {
                     contenedor.querySelectorAll('.img-option').forEach(el => el.classList.remove('seleccionada'));
                     this.classList.add('seleccionada');
                 };
@@ -1757,39 +1827,79 @@
             document.getElementById('lista-imagenes-tema').innerHTML = '';
         }
 
-         function crearNuevoTema() {
-              const nombre = document.getElementById('input-nuevo-tema').value.trim().toLowerCase().replace(/\s+/g, '_');
-              if (!nombre) return;
-              
-               if (!configuracion.temas[nombre]) {
-                   configuracion.temas[nombre] = [];
-                   temas = Object.keys(configuracion.temas);
-                   
-                   // Si estaba en eliminados, quitarlo (el usuario lo recrea)
-                   const temasEliminados = JSON.parse(localStorage.getItem('temas_eliminados') || '[]');
-                   const idx = temasEliminados.indexOf(nombre);
-                   if (idx >= 0) {
-                       temasEliminados.splice(idx, 1);
-                       localStorage.setItem('temas_eliminados', JSON.stringify(temasEliminados));
-                   }
-                   
-                   // Guardar los temas personalizados en localStorage
-                   const temasPersonalizados = temas.filter(t => !temasOriginalesConfig.includes(t));
-                   localStorage.setItem('temas_custom', JSON.stringify(temasPersonalizados));
-               }
-              
-               // Guardar imagen del tema si se selecciono una
-               const imgSel = document.querySelector('#lista-imagenes-tema .img-option.seleccionada');
-               const imagenSel = imgSel ? imgSel.dataset.imagen : '';
-              if (imagenSel) {
-                  const palabra = nombre.replace(/_/g, ' ').toUpperCase();
-                  configuracion.temas_info[nombre] = { imagen: imagenSel, palabra: palabra };
-                  const infoCustom = JSON.parse(localStorage.getItem('temas_info_custom') || '{}');
-                  infoCustom[nombre] = { imagen: imagenSel, palabra: palabra };
-                  localStorage.setItem('temas_info_custom', JSON.stringify(infoCustom));
-              }
-              
-               ocultarNuevoTema();
+        function crearNuevoTema() {
+            const nombre = document.getElementById('input-nuevo-tema').value.trim().toLowerCase().replace(/\s+/g, '_');
+            if (!nombre) return;
+
+            if (!configuracion.temas[nombre]) {
+                configuracion.temas[nombre] = [];
+                temas = Object.keys(configuracion.temas);
+
+                // Si estaba en eliminados, quitarlo (el usuario lo recrea)
+                const temasEliminados = JSON.parse(localStorage.getItem('temas_eliminados') || '[]');
+                const idx = temasEliminados.indexOf(nombre);
+                if (idx >= 0) {
+                    temasEliminados.splice(idx, 1);
+                    localStorage.setItem('temas_eliminados', JSON.stringify(temasEliminados));
+                }
+
+                // Guardar los temas personalizados en localStorage
+                const temasPersonalizados = temas.filter(t => !temasOriginalesConfig.includes(t));
+                localStorage.setItem('temas_custom', JSON.stringify(temasPersonalizados));
+            }
+
+            // Guardar imagen del tema si se selecciono una
+            const imgSel = document.querySelector('#lista-imagenes-tema .img-option.seleccionada');
+            const imagenSel = imgSel ? imgSel.dataset.imagen : '';
+            if (imagenSel) {
+                const palabra = nombre.replace(/_/g, ' ').toUpperCase();
+                configuracion.temas_info[nombre] = { imagen: imagenSel, palabra: palabra };
+                const infoCustom = JSON.parse(localStorage.getItem('temas_info_custom') || '{}');
+                infoCustom[nombre] = { imagen: imagenSel, palabra: palabra };
+                localStorage.setItem('temas_info_custom', JSON.stringify(infoCustom));
+            }
+
+            ocultarNuevoTema();
+            crearOpcionesTematicas();
+            crearOpcionesTematicasPalabras();
+            crearOpcionesTematicasConfig();
+            crearBotonesTemas();
+            cargarBotones();
+            actualizarInfoGestion();
+            rellenarSelectorImagenes();
+            listarPictogramasTema();
+            leerPalabra('TEMA CREADO');
+        }
+
+        function borrarTema() {
+            const tema = document.getElementById('select-tema').value;
+            if (confirm('Borrar todo el tema "' + tema.toUpperCase() + '" y sus imagenes?')) {
+                localStorage.removeItem('imagenes_' + tema);
+                localStorage.removeItem('orden_' + tema);
+                localStorage.removeItem('posiciones_' + tema);
+                localStorage.removeItem('movidos_de_' + tema);
+                localStorage.removeItem('movidos_a_' + tema);
+                delete configuracion.temas[tema];
+                delete configuracion.temas_info[tema];
+                const infoCustom = JSON.parse(localStorage.getItem('temas_info_custom') || '{}');
+                delete infoCustom[tema];
+                localStorage.setItem('temas_info_custom', JSON.stringify(infoCustom));
+                if (temas.length > 1) {
+                    temas = temas.filter(t => t !== tema);
+                    if (temaActual >= temas.length) temaActual = 0;
+                }
+
+                // Persistir el borrado en localStorage (para que sobreviva a recarga)
+                const temasEliminados = JSON.parse(localStorage.getItem('temas_eliminados') || '[]');
+                if (!temasEliminados.includes(tema)) {
+                    temasEliminados.push(tema);
+                }
+                localStorage.setItem('temas_eliminados', JSON.stringify(temasEliminados));
+
+                // Actualizar localStorage con los temas personalizados restantes
+                const temasPersonalizados = temas.filter(t => !temasOriginalesConfig.includes(t));
+                localStorage.setItem('temas_custom', JSON.stringify(temasPersonalizados));
+
                 crearOpcionesTematicas();
                 crearOpcionesTematicasPalabras();
                 crearOpcionesTematicasConfig();
@@ -1798,49 +1908,9 @@
                 actualizarInfoGestion();
                 rellenarSelectorImagenes();
                 listarPictogramasTema();
-                leerPalabra('TEMA CREADO');
-          }
-
-         function borrarTema() {
-              const tema = document.getElementById('select-tema').value;
-              if (confirm('Borrar todo el tema "' + tema.toUpperCase() + '" y sus imagenes?')) {
-                  localStorage.removeItem('imagenes_' + tema);
-                  localStorage.removeItem('orden_' + tema);
-                  localStorage.removeItem('posiciones_' + tema);
-                  localStorage.removeItem('movidos_de_' + tema);
-                  localStorage.removeItem('movidos_a_' + tema);
-                  delete configuracion.temas[tema];
-                  delete configuracion.temas_info[tema];
-                  const infoCustom = JSON.parse(localStorage.getItem('temas_info_custom') || '{}');
-                  delete infoCustom[tema];
-                  localStorage.setItem('temas_info_custom', JSON.stringify(infoCustom));
-                  if (temas.length > 1) {
-                      temas = temas.filter(t => t !== tema);
-                      if (temaActual >= temas.length) temaActual = 0;
-                  }
-                  
-                   // Persistir el borrado en localStorage (para que sobreviva a recarga)
-                   const temasEliminados = JSON.parse(localStorage.getItem('temas_eliminados') || '[]');
-                   if (!temasEliminados.includes(tema)) {
-                       temasEliminados.push(tema);
-                   }
-                   localStorage.setItem('temas_eliminados', JSON.stringify(temasEliminados));
-                   
-                   // Actualizar localStorage con los temas personalizados restantes
-                   const temasPersonalizados = temas.filter(t => !temasOriginalesConfig.includes(t));
-                   localStorage.setItem('temas_custom', JSON.stringify(temasPersonalizados));
-                   
-                     crearOpcionesTematicas();
-                    crearOpcionesTematicasPalabras();
-                    crearOpcionesTematicasConfig();
-                    crearBotonesTemas();
-                    cargarBotones();
-                    actualizarInfoGestion();
-                    rellenarSelectorImagenes();
-                    listarPictogramasTema();
-                    leerPalabra('TEMA BORRADO');
-              }
-          }
+                leerPalabra('TEMA BORRADO');
+            }
+        }
 
         function obtenerTodasLasImagenes(tema) {
             const configItems = (configuracion.temas[tema] || []).map(item => ({
@@ -1860,7 +1930,7 @@
             const personalizados = obtenerImagenesPersonalizadas(tema);
             const selectBorrar = document.getElementById('select-imagen-borrar');
             const btnBorrar = document.getElementById('btn-borrar-imagen');
-            
+
             if (personalizados.length > 0) {
                 selectBorrar.style.display = 'block';
                 btnBorrar.style.display = 'block';
@@ -1882,7 +1952,7 @@
             const indice = parseInt(document.getElementById('select-imagen-borrar').value);
             const personalizados = obtenerImagenesPersonalizadas(tema);
             const item = personalizados[indice];
-            
+
             if (confirm('Borrar imagen "' + item.palabra + '"?')) {
                 personalizados.splice(indice, 1);
                 localStorage.setItem('imagenes_' + tema, JSON.stringify(personalizados));
@@ -2054,15 +2124,15 @@
             info.textContent = 'Tema: ' + tema.toUpperCase() + ' | Total: ' + todas.length + ' | Personalizadas: ' + personalizadas.length + ' | Ocultas: ' + ocultos.length;
         }
 
-        document.getElementById('select-tema').addEventListener('change', function() {
+        document.getElementById('select-tema').addEventListener('change', function () {
             actualizarInfoGestion();
         });
 
-        document.getElementById('select-tema-palabras').addEventListener('change', function() {
+        document.getElementById('select-tema-palabras').addEventListener('change', function () {
             actualizarSelectorImagenesBorrar();
         });
 
-        document.getElementById('select-tema-config').addEventListener('change', function() {
+        document.getElementById('select-tema-config').addEventListener('change', function () {
             listarPictogramasTema();
             rellenarSelectorImagenes();
         });
@@ -2236,10 +2306,11 @@
 
                 document.getElementById('info-importar').textContent = 'Config importado correctamente';
                 leerPalabra('CONFIG IMPORTADO');
-            } catch(e) {
+            } catch (e) {
                 alert('Error al procesar el archivo: ' + e.message);
             }
         }
     </script>
 </body>
+
 </html>
