@@ -1,4 +1,4 @@
-const configuracion = {
+var configuracion = {
     clave_acceso: 'sonrie',
     temas: {
         lugares: [

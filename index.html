@@ -2,7 +2,9 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
     <title>Comunicador</title>
 
     <style>
@@ -16,6 +18,7 @@
             font-family: Arial, sans-serif;
             background-color: #f0f0f0;
             height: 100vh;
+            height: var(--app-height, 100vh);
             display: flex;
             flex-direction: column;
             overflow: hidden;
@@ -800,8 +803,72 @@
         </div>
     </div>
 
+
+    <script>
+        /* Compatibilidad extra para Safari/iOS antiguos sin perder drag & drop original */
+        (function () {
+            function addEvent(el, ev, fn, capture) {
+                if (el.addEventListener) el.addEventListener(ev, fn, !!capture);
+                else if (el.attachEvent) el.attachEvent('on' + ev, fn);
+            }
+            function addUnique(arr, val) {
+                if (!val) return;
+                for (var i = 0; i < arr.length; i++) if (arr[i] === val) return;
+                arr.push(val);
+            }
+            function encodeSegments(path) {
+                var parts = String(path || '').split('/');
+                for (var i = 0; i < parts.length; i++) {
+                    try { parts[i] = encodeURIComponent(decodeURIComponent(parts[i])); }
+                    catch(e) { parts[i] = encodeURIComponent(parts[i]); }
+                }
+                return parts.join('/');
+            }
+            function candidates(src) {
+                var list = [];
+                if (!src || src.indexOf('data:') === 0) return [src];
+                addUnique(list, src);
+                try { addUnique(list, encodeURI(src)); } catch(e) {}
+                if (String.prototype.normalize) {
+                    try {
+                        addUnique(list, src.normalize('NFC'));
+                        addUnique(list, encodeURI(src.normalize('NFC')));
+                        addUnique(list, src.normalize('NFD'));
+                        addUnique(list, encodeURI(src.normalize('NFD')));
+                    } catch(e) {}
+                }
+                addUnique(list, encodeSegments(src));
+                return list;
+            }
+            addEvent(document, 'error', function (ev) {
+                var img = ev.target || ev.srcElement;
+                if (!img || String(img.tagName).toLowerCase() !== 'img') return;
+                var original = img.getAttribute('data-original-src') || img.getAttribute('src') || '';
+                img.setAttribute('data-original-src', original);
+                var tries = candidates(original);
+                var pos = parseInt(img.getAttribute('data-fallback-pos') || '0', 10) + 1;
+                if (pos < tries.length) {
+                    img.setAttribute('data-fallback-pos', String(pos));
+                    img.style.display = 'block';
+                    img.src = tries[pos];
+                    if (ev.stopImmediatePropagation) ev.stopImmediatePropagation();
+                    if (ev.preventDefault) ev.preventDefault();
+                    ev.cancelBubble = true;
+                    return false;
+                }
+            }, true);
+            function setAppHeight() {
+                var h = window.innerHeight || document.documentElement.clientHeight || 600;
+                try { document.documentElement.style.setProperty('--app-height', h + 'px'); } catch(e) {}
+            }
+            setAppHeight();
+            addEvent(window, 'resize', setAppHeight);
+            addEvent(window, 'orientationchange', function () { setTimeout(setAppHeight, 250); });
+        }());
+    </script>
     <script src="config.js"></script>
     <script>
+        // Drag & drop original preservado: mover pictogramas dentro del tablero y entre temas.
         // Guardar los temas originales de config.js
         const temasOriginalesConfig = Object.keys(configuracion.temas);
         
