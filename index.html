@@ -7,7 +7,7 @@
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="format-detection" content="telephone=no">
-    <title>Comunicador 1.0.2</title>
+    <title>Comunicador 1.0.3</title>
 
     <style>
         * {
@@ -1728,10 +1728,33 @@
         function normalizarPassword(valor) {
             valor = String(valor || '').trim().toLowerCase();
 
-            // Quitar acentos si el navegador soporta normalize()
+            // Safari/iOS moderno: elimina acentos y marcas diacríticas.
+            // Ejemplo: "sonríe" -> "sonrie".
             if (valor.normalize) {
                 valor = valor.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            } else {
+                // Fallback para navegadores antiguos sin String.prototype.normalize.
+                var mapa = {
+                    'á': 'a', 'à': 'a', 'ä': 'a', 'â': 'a',
+                    'é': 'e', 'è': 'e', 'ë': 'e', 'ê': 'e',
+                    'í': 'i', 'ì': 'i', 'ï': 'i', 'î': 'i',
+                    'ó': 'o', 'ò': 'o', 'ö': 'o', 'ô': 'o',
+                    'ú': 'u', 'ù': 'u', 'ü': 'u', 'û': 'u',
+                    'ñ': 'n',
+                    'ç': 'c'
+                };
+
+                valor = valor.replace(/[áàäâéèëêíìïîóòöôúùüûñç]/g, function (letra) {
+                    return mapa[letra] || letra;
+                });
             }
+
+            // Normaliza comillas “raras” y espacios no separables que a veces mete iOS.
+            valor = valor
+                .replace(/[‘’`´]/g, "'")
+                .replace(/[“”]/g, '"')
+                .replace(/\u00a0/g, ' ')
+                .trim();
 
             return valor;
         }
